@@ -2,56 +2,78 @@ package provider
 
 import (
 	"context"
+	"io/ioutil"
+	"os"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
+	"github.com/nimajalali/go-force/force"
 )
 
-func init() {
-	// Set descriptions to support markdown syntax, this will be used in document generation
-	// and the language server.
-	schema.DescriptionKind = schema.StringMarkdown
-
-	// Customize the content of descriptions when output. For example you can add defaults on
-	// to the exported descriptions if present.
-	// schema.SchemaDescriptionBuilder = func(s *schema.Schema) string {
-	// 	desc := s.Description
-	// 	if s.Default != nil {
-	// 		desc += fmt.Sprintf(" Defaults to `%v`.", s.Default)
-	// 	}
-	// 	return strings.TrimSpace(desc)
-	// }
-}
-
-func New(version string) func() *schema.Provider {
-	return func() *schema.Provider {
-		p := &schema.Provider{
-			DataSourcesMap: map[string]*schema.Resource{
-				"scaffolding_data_source": dataSourceScaffolding(),
+func New() *schema.Provider {
+	p := &schema.Provider{
+		Schema: map[string]*schema.Schema{
+			"client_id": {
+				Type:        schema.TypeString,
+				Required:    true,
+				DefaultFunc: schema.EnvDefaultFunc("SALESFORCE_CLIENT_ID", nil),
 			},
-			ResourcesMap: map[string]*schema.Resource{
-				"scaffolding_resource": resourceScaffolding(),
+			"private_key": {
+				Type:        schema.TypeString,
+				Required:    true,
+				DefaultFunc: schema.MultiEnvDefaultFunc([]string{"SALESFORCE_PRIVATE_KEY_FILE", "SALESFORCE_PRIVATE_KEY"}, nil),
 			},
-		}
-
-		p.ConfigureContextFunc = configure(version, p)
-
-		return p
+			"api_version": {
+				Type:        schema.TypeString,
+				Required:    true,
+				DefaultFunc: schema.EnvDefaultFunc("SALESFORCE_API_VERSION", nil),
+			},
+			"username": {
+				Type:        schema.TypeString,
+				Required:    true,
+				DefaultFunc: schema.EnvDefaultFunc("SALESFORCE_USERNAME", nil),
+			},
+		},
+		DataSourcesMap: map[string]*schema.Resource{},
+		ResourcesMap: map[string]*schema.Resource{
+			"salesforce_user": resourceUser(),
+		},
 	}
+
+	p.ConfigureContextFunc = configure
+
+	return p
 }
 
-type apiClient struct {
-	// Add whatever fields, client or connection info, etc. here
-	// you would need to setup to communicate with the upstream
-	// API.
-}
+func configure(ctx context.Context, d *schema.ResourceData) (interface{}, diag.Diagnostics) {
+	apiVersion := d.Get("api_version").(string)
+	username := d.Get("username").(string)
+	clientId := d.Get("client_id").(string)
+	privateKey := d.Get("private_key").(string)
 
-func configure(version string, p *schema.Provider) func(context.Context, *schema.ResourceData) (interface{}, diag.Diagnostics) {
-	return func(context.Context, *schema.ResourceData) (interface{}, diag.Diagnostics) {
-		// Setup a User-Agent for your API client (replace the provider name for yours):
-		// userAgent := p.UserAgent("terraform-provider-scaffolding", version)
-		// TODO: myClient.UserAgent = userAgent
-
-		return &apiClient{}, nil
+	// try to read private key as file
+	privateKeyBytes, err := ioutil.ReadFile(privateKey)
+	if os.IsNotExist(err) {
+		// assume private key was passed directly
+		privateKeyBytes = []byte(privateKey)
+	} else if err != nil {
+		return nil, diag.FromErr(err)
 	}
+
+	signedJwt, err := SignJWT(privateKeyBytes, username, clientId)
+	if err != nil {
+		return nil, diag.FromErr(err)
+	}
+
+	resp, err := Authenticate(signedJwt)
+	if err != nil {
+		return nil, diag.FromErr(err)
+	}
+
+	client, err := force.CreateWithAccessToken(apiVersion, clientId, resp.AccessToken, resp.InstanceUrl)
+	if err != nil {
+		return nil, diag.FromErr(err)
+	}
+
+	return client, nil
 }
