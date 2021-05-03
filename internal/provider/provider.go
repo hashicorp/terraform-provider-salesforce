@@ -34,7 +34,9 @@ func New() *schema.Provider {
 				DefaultFunc: schema.EnvDefaultFunc("SALESFORCE_USERNAME", nil),
 			},
 		},
-		DataSourcesMap: map[string]*schema.Resource{},
+		DataSourcesMap: map[string]*schema.Resource{
+			"salesforce_profile": datasourceProfile(),
+		},
 		ResourcesMap: map[string]*schema.Resource{
 			"salesforce_user": resourceUser(),
 		},

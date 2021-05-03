@@ -86,11 +86,10 @@ func resourceUser() *schema.Resource {
 			},
 			"profile_id": {
 				Type:     schema.TypeString,
-				Optional: true,
+				Required: true,
 				DiffSuppressFunc: func(k, old, new string, d *schema.ResourceData) bool {
 					return normalizeId(old) == normalizeId(new)
 				},
-				Default: "00e5e000000Xmvq", // this is the "chatter free" profile, the dev sandbox comes with 5000 licenses for this profile type
 			},
 			"time_zone_sid_key": {
 				Type:     schema.TypeString,
@@ -124,6 +123,7 @@ func resourceUserRead(ctx context.Context, d *schema.ResourceData, meta interfac
 	if err != nil {
 		return diag.FromErr(err)
 	}
+	d.SetId(user.Id)
 	d.Set("alias", user.Alias)
 	d.Set("email", user.Email)
 	d.Set("email_encoding_key", user.EmailEncodingKey)
