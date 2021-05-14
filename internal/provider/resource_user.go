@@ -2,9 +2,11 @@ package provider
 
 import (
 	"context"
+	"strings"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
+	"github.com/hashicorp/terraform-provider-salesforce/internal/common"
 	"github.com/nimajalali/go-force/force"
 	"github.com/nimajalali/go-force/sobjects"
 )
@@ -85,11 +87,9 @@ func resourceUser() *schema.Resource {
 				Default:  "en_US",
 			},
 			"profile_id": {
-				Type:     schema.TypeString,
-				Required: true,
-				DiffSuppressFunc: func(k, old, new string, d *schema.ResourceData) bool {
-					return normalizeId(old) == normalizeId(new)
-				},
+				Type:             schema.TypeString,
+				Required:         true,
+				DiffSuppressFunc: common.SuppressIdDiff,
 			},
 			"time_zone_sid_key": {
 				Type:     schema.TypeString,
@@ -121,7 +121,13 @@ func resourceUserRead(ctx context.Context, d *schema.ResourceData, meta interfac
 	var user User
 	err := meta.(*force.ForceApi).GetSObject(d.Id(), nil, &user)
 	if err != nil {
-		return diag.FromErr(err)
+		// TODO try type-assert to force.ApiError(s)
+		if strings.Contains(err.Error(), "NOT_FOUND") {
+			d.SetId("")
+			return nil
+		} else {
+			return diag.FromErr(err)
+		}
 	}
 	d.SetId(user.Id)
 	d.Set("alias", user.Alias)

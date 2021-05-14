@@ -1,4 +1,4 @@
-package provider
+package common
 
 import (
 	"encoding/json"
@@ -6,6 +6,7 @@ import (
 	"io/ioutil"
 	"net/http"
 	"net/url"
+	"os"
 	"strings"
 	"time"
 
@@ -86,4 +87,34 @@ func Authenticate(signedJwt string) (AuthResponse, error) {
 		return oauth, fmt.Errorf("Unable to unmarshal authentication response: %v", err)
 	}
 	return oauth, nil
+}
+
+type Config struct {
+	ClientId   string
+	PrivateKey string
+	ApiVersion string
+	Username   string
+}
+
+func Client(config Config) (*force.ForceApi, error) {
+	// try to read private key as file
+	privateKeyBytes, err := ioutil.ReadFile(config.PrivateKey)
+	if os.IsNotExist(err) {
+		// assume private key was passed directly
+		privateKeyBytes = []byte(config.PrivateKey)
+	} else if err != nil {
+		return nil, err
+	}
+
+	signedJwt, err := SignJWT(privateKeyBytes, config.Username, config.ClientId)
+	if err != nil {
+		return nil, err
+	}
+
+	resp, err := Authenticate(signedJwt)
+	if err != nil {
+		return nil, err
+	}
+
+	return force.CreateWithAccessToken(config.ApiVersion, config.ClientId, resp.AccessToken, resp.InstanceUrl)
 }

@@ -2,12 +2,10 @@ package provider
 
 import (
 	"context"
-	"io/ioutil"
-	"os"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
-	"github.com/nimajalali/go-force/force"
+	"github.com/hashicorp/terraform-provider-salesforce/internal/common"
 )
 
 func New() *schema.Provider {
@@ -48,34 +46,14 @@ func New() *schema.Provider {
 }
 
 func configure(ctx context.Context, d *schema.ResourceData) (interface{}, diag.Diagnostics) {
-	apiVersion := d.Get("api_version").(string)
-	username := d.Get("username").(string)
-	clientId := d.Get("client_id").(string)
-	privateKey := d.Get("private_key").(string)
-
-	// try to read private key as file
-	privateKeyBytes, err := ioutil.ReadFile(privateKey)
-	if os.IsNotExist(err) {
-		// assume private key was passed directly
-		privateKeyBytes = []byte(privateKey)
-	} else if err != nil {
-		return nil, diag.FromErr(err)
-	}
-
-	signedJwt, err := SignJWT(privateKeyBytes, username, clientId)
+	client, err := common.Client(common.Config{
+		ApiVersion: d.Get("api_version").(string),
+		Username:   d.Get("username").(string),
+		ClientId:   d.Get("client_id").(string),
+		PrivateKey: d.Get("private_key").(string),
+	})
 	if err != nil {
 		return nil, diag.FromErr(err)
 	}
-
-	resp, err := Authenticate(signedJwt)
-	if err != nil {
-		return nil, diag.FromErr(err)
-	}
-
-	client, err := force.CreateWithAccessToken(apiVersion, clientId, resp.AccessToken, resp.InstanceUrl)
-	if err != nil {
-		return nil, diag.FromErr(err)
-	}
-
 	return client, nil
 }

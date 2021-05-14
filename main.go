@@ -4,9 +4,12 @@ import (
 	"context"
 	"flag"
 	"log"
+	"os"
 
+	tf5server "github.com/hashicorp/terraform-plugin-go/tfprotov5/server"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/plugin"
 	"github.com/hashicorp/terraform-provider-salesforce/internal/provider"
+	"github.com/hashicorp/terraform-provider-salesforce/internal/providerdynamic"
 )
 
 // Run "go generate" to format example terraform files and generate the docs for the registry/website
@@ -30,7 +33,6 @@ var (
 
 func main() {
 	var debugMode bool
-
 	flag.BoolVar(&debugMode, "debug", false, "set to true to run the provider with support for debuggers like delve")
 	flag.Parse()
 
@@ -44,5 +46,11 @@ func main() {
 		return
 	}
 
-	plugin.Serve(opts)
+	// rudimentary experimental mode toggle
+	// TODO: use plugin-mux
+	if os.Getenv("SALESFORCE_DYNAMIC_MODE") != "" {
+		tf5server.Serve("registry.terraform.io/hashicorp/salesforce", providerdynamic.New)
+	} else {
+		plugin.Serve(opts)
+	}
 }
