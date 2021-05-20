@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"math/big"
+	"strings"
 
 	"github.com/davecgh/go-spew/spew"
 	"github.com/hashicorp/terraform-plugin-go/tfprotov5"
@@ -79,6 +80,73 @@ func (s *providerServer) ApplyResourceChange(ctx context.Context, req *tfprotov5
 	}
 
 	switch {
+	case !applyPriorState.IsNull() && !applyPlannedState.IsNull():
+		// Update resource
+
+		var id string
+		err = applyPriorVal["id"].As(&id)
+		if err != nil {
+			resp.Diagnostics = append(resp.Diagnostics, &tfprotov5.Diagnostic{
+				Severity: tfprotov5.DiagnosticSeverityError,
+				Summary:  "Failed to extract 'id' from prior state",
+				Detail:   err.Error(),
+			})
+			return resp, nil
+		}
+
+		var typ string
+		err = applyPriorVal["type"].As(&typ)
+		if err != nil {
+			resp.Diagnostics = append(resp.Diagnostics, &tfprotov5.Diagnostic{
+				Severity: tfprotov5.DiagnosticSeverityError,
+				Summary:  "Failed to extract 'type' from prior state",
+				Detail:   err.Error(),
+			})
+			return resp, nil
+		}
+
+		// TODO check that 'type' remains the same between prior and planned
+
+		attrs, err := mapOfInterfaceFromTftypesObject(applyPlannedVal["attributes"])
+		if err != nil {
+			resp.Diagnostics = append(resp.Diagnostics, &tfprotov5.Diagnostic{
+				Severity: tfprotov5.DiagnosticSeverityError,
+				Summary:  "Error extracting 'attributes' from planned state",
+				Detail:   err.Error(),
+			})
+			return resp, nil
+		}
+		meta, err := s.client.DescribeSObjects()
+		if err != nil {
+			resp.Diagnostics = append(resp.Diagnostics, &tfprotov5.Diagnostic{
+				Severity: tfprotov5.DiagnosticSeverityError,
+				Summary:  "Error getting sObject metadata",
+				Detail:   err.Error(),
+			})
+			return resp, nil
+		}
+		uri := strings.Replace(meta[typ].URLs["rowTemplate"], "{ID}", id, 1)
+
+		err = s.client.Patch(uri, nil, attrs, nil)
+		if err != nil {
+			resp.Diagnostics = append(resp.Diagnostics, &tfprotov5.Diagnostic{
+				Severity: tfprotov5.DiagnosticSeverityError,
+				Summary:  "Error updating sObject: " + typ,
+				Detail:   err.Error(),
+			})
+			return resp, nil
+		}
+
+		newStateVal := tftypes.NewValue(applyPlannedState.Type(), applyPlannedVal)
+		s.logger.Trace("[ApplyResourceChange][Apply]", "new state value", spew.Sdump(newStateVal))
+
+		newResState, err := tfprotov5.NewDynamicValue(newStateVal.Type(), newStateVal)
+		if err != nil {
+			return resp, err
+		}
+
+		resp.NewState = &newResState
+
 	case !applyPlannedState.IsNull():
 		// Apply resource
 
@@ -181,13 +249,18 @@ func (s *providerServer) ApplyResourceChange(ctx context.Context, req *tfprotov5
 		if err != nil {
 			resp.Diagnostics = append(resp.Diagnostics, &tfprotov5.Diagnostic{
 				Severity: tfprotov5.DiagnosticSeverityError,
-				Summary:  "Error updating sObject: " + typ,
+				Summary:  "Error deleting sObject: " + typ,
 				Detail:   err.Error(),
 			})
 			return resp, nil
 		}
 
 		resp.NewState = req.PlannedState
+		resp.Diagnostics = append(resp.Diagnostics, &tfprotov5.Diagnostic{
+			Severity: tfprotov5.DiagnosticSeverityWarning,
+			Summary:  "Users cannot be deleted from salesforce",
+			Detail:   "Destroy has deactivated the user and discarded it from Terraform state, but the record continues to exist, and the unique username remains taken",
+		})
 	}
 
 	return resp, nil
