@@ -137,6 +137,20 @@ func (s *providerServer) ApplyResourceChange(ctx context.Context, req *tfprotov5
 			return resp, nil
 		}
 
+		sObject, err := getSObject(id, typ, s.client)
+		if err != nil {
+			resp.Diagnostics = append(resp.Diagnostics, &tfprotov5.Diagnostic{
+				Severity: tfprotov5.DiagnosticSeverityError,
+				Summary:  "Failed to get sObject",
+				Detail:   err.Error(),
+			})
+			return resp, nil
+		}
+
+		applyPlannedVal["attributes"] = tftypes.NewValue(tftypes.Object{
+			AttributeTypes: attributeTypes(sObject),
+		}, sObject)
+
 		newStateVal := tftypes.NewValue(applyPlannedState.Type(), applyPlannedVal)
 		s.logger.Trace("[ApplyResourceChange][Apply]", "new state value", spew.Sdump(newStateVal))
 
@@ -192,9 +206,21 @@ func (s *providerServer) ApplyResourceChange(ctx context.Context, req *tfprotov5
 			return resp, nil
 		}
 
-		// we should probably do a full read, but let's just see if setting the ID back
-		// in state works
+		sObject, err := getSObject(forceResp.Id, typ, s.client)
+		if err != nil {
+			resp.Diagnostics = append(resp.Diagnostics, &tfprotov5.Diagnostic{
+				Severity: tfprotov5.DiagnosticSeverityError,
+				Summary:  "Failed to get sObject",
+				Detail:   err.Error(),
+			})
+			return resp, nil
+		}
+		// set id on create
 		applyPlannedVal["id"] = tftypes.NewValue(tftypes.String, forceResp.Id)
+
+		applyPlannedVal["attributes"] = tftypes.NewValue(tftypes.Object{
+			AttributeTypes: attributeTypes(sObject),
+		}, sObject)
 
 		newStateVal := tftypes.NewValue(applyPlannedState.Type(), applyPlannedVal)
 		s.logger.Trace("[ApplyResourceChange][Apply]", "new state value", spew.Sdump(newStateVal))
