@@ -2,168 +2,215 @@ package provider
 
 import (
 	"context"
+	"fmt"
 	"strings"
 
-	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
-	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
-	"github.com/hashicorp/terraform-provider-salesforce/internal/common"
+	"github.com/hashicorp/terraform-plugin-framework/tfsdk"
+	"github.com/hashicorp/terraform-plugin-framework/types"
+	"github.com/hashicorp/terraform-plugin-go/tfprotov6"
+	"github.com/hashicorp/terraform-plugin-go/tftypes"
 	"github.com/nimajalali/go-force/force"
-	"github.com/nimajalali/go-force/sobjects"
 )
 
-type User struct {
-	sobjects.BaseSObject
-	Alias             string `force:",omitempty"`
-	Email             string `force:",omitempty"`
-	EmailEncodingKey  string `force:",omitempty"`
-	LanguageLocaleKey string `force:",omitempty"`
-	LastName          string `force:",omitempty"`
-	LocaleSidKey      string `force:",omitempty"`
-	ProfileId         string `force:",omitempty"`
-	TimeZoneSidKey    string `force:",omitempty"`
-	Username          string `force:",omitempty"`
-	IsActive          *bool  `force:",omitempty"`
+type userType struct {
 }
 
-func (t *User) ApiName() string {
-	return "User"
-}
-
-type UserQueryResponse struct {
-	sobjects.BaseQuery
-	Records []User `json:"Records" force:"records"`
-}
-
-func UserFromResourceData(d *schema.ResourceData) *User {
-	// go-force must use pointer type for booleans to discern between false and unset
-	isActive := d.Get("is_active").(bool)
-	return &User{
-		Alias:             d.Get("alias").(string),
-		Email:             d.Get("email").(string),
-		EmailEncodingKey:  d.Get("email_encoding_key").(string),
-		LanguageLocaleKey: d.Get("language_locale_key").(string),
-		LastName:          d.Get("last_name").(string),
-		LocaleSidKey:      d.Get("locale_sid_key").(string),
-		ProfileId:         d.Get("profile_id").(string),
-		TimeZoneSidKey:    d.Get("time_zone_sid_key").(string),
-		Username:          d.Get("username").(string),
-		IsActive:          &isActive,
-	}
-}
-
-func resourceUser() *schema.Resource {
-	return &schema.Resource{
-		Schema: map[string]*schema.Schema{
+func (u userType) GetSchema(_ context.Context) (tfsdk.Schema, []*tfprotov6.Diagnostic) {
+	return tfsdk.Schema{
+		Attributes: map[string]tfsdk.Attribute{
+			"id": {
+				Type:     types.StringType,
+				Computed: true,
+			},
 			"alias": {
-				Type:     schema.TypeString,
+				Type:     types.StringType,
 				Required: true,
 			},
 			"email": {
-				Type:     schema.TypeString,
+				Type:     types.StringType,
 				Required: true,
 			},
 			"email_encoding_key": {
-				Type:     schema.TypeString,
+				Type:     types.StringType,
 				Optional: true,
-				Default:  "ISO-8859-1",
+				// Default:  "ISO-8859-1",
 			},
 			"is_active": {
-				Type:     schema.TypeBool,
+				Type:     types.BoolType,
 				Optional: true,
-				Default:  true,
+				// Default:  true,
 			},
 			"language_locale_key": {
-				Type:     schema.TypeString,
+				Type:     types.StringType,
 				Optional: true,
-				Default:  "en_US",
+				// Default:  "en_US",
 			},
 			"last_name": {
-				Type:     schema.TypeString,
+				Type:     types.StringType,
 				Required: true,
 			},
 			"locale_sid_key": {
-				Type:     schema.TypeString,
+				Type:     types.StringType,
 				Optional: true,
-				Default:  "en_US",
+				// Default:  "en_US",
 			},
 			"profile_id": {
-				Type:             schema.TypeString,
-				Required:         true,
-				DiffSuppressFunc: common.SuppressIdDiff,
+				Type:     types.StringType,
+				Required: true,
 			},
 			"time_zone_sid_key": {
-				Type:     schema.TypeString,
+				Type:     types.StringType,
 				Optional: true,
-				Default:  "America/Los_Angeles",
+				// Default:  "America/Los_Angeles",
 			},
 			"username": {
-				Type:     schema.TypeString,
+				Type:     types.StringType,
 				Required: true,
 			},
 		},
-		CreateContext: resourceUserCreate,
-		ReadContext:   resourceUserRead,
-		UpdateContext: resourceUserUpdate,
-		DeleteContext: resourceUserDelete,
-	}
+	}, nil
 }
 
-func resourceUserCreate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	resp, err := meta.(*force.ForceApi).InsertSObject(UserFromResourceData(d))
-	if err != nil {
-		return diag.FromErr(err)
-	}
-	d.SetId(resp.Id)
-	return resourceUserRead(ctx, d, meta)
-}
-
-func resourceUserRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	var user User
-	err := meta.(*force.ForceApi).GetSObject(d.Id(), nil, &user)
-	if err != nil {
-		// TODO try type-assert to force.ApiError(s)
-		if strings.Contains(err.Error(), "NOT_FOUND") {
-			d.SetId("")
-			return nil
-		} else {
-			return diag.FromErr(err)
+func (u userType) NewResource(_ context.Context, p tfsdk.Provider) (tfsdk.Resource, []*tfprotov6.Diagnostic) {
+	prov, ok := p.(*provider)
+	if !ok {
+		return nil, []*tfprotov6.Diagnostic{
+			{
+				Severity: tfprotov6.DiagnosticSeverityError,
+				Summary:  "Error converting provider",
+				Detail:   fmt.Sprintf("An unexpected error was encountered converting the provider. This is always a bug in the provider.\n\nType: %T", p),
+			},
 		}
 	}
-	d.SetId(user.Id)
-	d.Set("alias", user.Alias)
-	d.Set("email", user.Email)
-	d.Set("email_encoding_key", user.EmailEncodingKey)
-	d.Set("is_active", user.IsActive)
-	d.Set("language_locale_key", user.LanguageLocaleKey)
-	d.Set("last_name", user.LastName)
-	d.Set("locale_sid_key", user.LocaleSidKey)
-	d.Set("profile_id", user.ProfileId)
-	d.Set("time_zone_sid_key", user.TimeZoneSidKey)
-	d.Set("username", user.Username)
-	return nil
+	return userResource{client: prov.client}, nil
 }
 
-func resourceUserUpdate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	err := meta.(*force.ForceApi).UpdateSObject(d.Id(), UserFromResourceData(d))
-	if err != nil {
-		return diag.FromErr(err)
+type userResource struct {
+	client *force.ForceApi
+}
+
+type User struct {
+	Id                types.String `tfsdk:"id"`
+	Alias             string       `tfsdk:"alias"`
+	Email             string       `tfsdk:"email"`
+	EmailEncodingKey  *string      `tfsdk:"email_encoding_key"`
+	IsActive          *bool        `tfsdk:"is_active"`
+	LanguageLocaleKey *string      `tfsdk:"language_locale_key"`
+	LastName          string       `tfsdk:"last_name"`
+	LocaleSidKey      *string      `tfsdk:"locale_sid_key"`
+	ProfileID         string       `tfsdk:"profile_id"`
+	TimeZoneSidKey    *string      `tfsdk:"time_zone_sid_key"`
+	Username          string       `tfsdk:"username"`
+}
+
+func (u User) ApiName() string {
+	return "User"
+}
+
+func (u User) ExternalIdApiName() string {
+	return ""
+}
+
+func (u User) withDefaults() User {
+	emailEncodingKey := "ISO-8859-1"
+	isActive := true
+	languageLocaleKey := "en_US"
+	localeSidKey := "en_US"
+	timeZoneSidKey := "America/Los_Angeles"
+
+	if u.EmailEncodingKey == nil {
+		u.EmailEncodingKey = &emailEncodingKey
 	}
-	return resourceUserRead(ctx, d, meta)
+	if u.IsActive == nil {
+		u.IsActive = &isActive
+	}
+	if u.LanguageLocaleKey == nil {
+		u.LanguageLocaleKey = &languageLocaleKey
+	}
+	if u.LocaleSidKey == nil {
+		u.LocaleSidKey = &localeSidKey
+	}
+	if u.TimeZoneSidKey == nil {
+		u.TimeZoneSidKey = &timeZoneSidKey
+	}
+
+	return u
 }
 
-func resourceUserDelete(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	// users can only be deactivated
+func (u userResource) Create(ctx context.Context, req tfsdk.CreateResourceRequest, resp *tfsdk.CreateResourceResponse) {
+	var user User
+	if diags := req.Plan.Get(ctx, &user); diagsHasError(diags) {
+		resp.Diagnostics = diags
+		return
+	}
+	// non-pointer method will not mutate the user declared in this function
+	// this is useful so that State.Set doesn't error with a mismatch with the plan
+	// where the unset fields were of course, unset.
+	sfResp, err := u.client.InsertSObject(user.withDefaults())
+	if err != nil {
+		resp.AddError("Error inserting User", err.Error())
+		return
+	}
+	user.Id = types.String{Value: sfResp.Id}
+
+	resp.Diagnostics = resp.State.Set(ctx, &user)
+}
+
+func (u userResource) Read(ctx context.Context, req tfsdk.ReadResourceRequest, resp *tfsdk.ReadResourceResponse) {
+	id, diags := req.State.GetAttribute(ctx, tftypes.NewAttributePath().WithAttributeName("id"))
+	if diagsHasError(diags) {
+		resp.Diagnostics = diags
+		return
+	}
+
+	var user User
+	err := u.client.GetSObject(id.(types.String).Value, nil, &user)
+
+	if err != nil {
+		if strings.Contains(err.Error(), "NOT_FOUND") {
+			resp.State.RemoveResource(ctx)
+		} else {
+			resp.AddError("Error Getting User", err.Error())
+		}
+		return
+	}
+
+	resp.Diagnostics = resp.State.Set(ctx, &user)
+}
+
+func (u userResource) Update(ctx context.Context, req tfsdk.UpdateResourceRequest, resp *tfsdk.UpdateResourceResponse) {
+	var user User
+	if diags := req.Plan.Get(ctx, &user); diagsHasError(diags) {
+		resp.Diagnostics = diags
+		return
+	}
+	// non-pointer method will not mutate the user declared in this function
+	// this is useful so that State.Set doesn't error with a mismatch with the plan
+	// where the unset fields were of course, unset.
+	if err := u.client.UpdateSObject(user.Id.Value, user.withDefaults()); err != nil {
+		resp.AddError("Error updating User", err.Error())
+		return
+	}
+}
+
+func (u userResource) Delete(ctx context.Context, req tfsdk.DeleteResourceRequest, resp *tfsdk.DeleteResourceResponse) {
+	id, diags := req.State.GetAttribute(ctx, tftypes.NewAttributePath().WithAttributeName("id"))
+	if diagsHasError(diags) {
+		resp.Diagnostics = diags
+		return
+	}
+
 	isActive := false
-	err := meta.(*force.ForceApi).UpdateSObject(d.Id(), &User{IsActive: &isActive})
+	err := u.client.UpdateSObject(id.(types.String).Value, User{IsActive: &isActive})
 	if err != nil {
-		return diag.FromErr(err)
+		if strings.Contains(err.Error(), "NOT_FOUND") {
+			resp.State.RemoveResource(ctx)
+		} else {
+			resp.AddError("Error Getting User", err.Error())
+		}
+		return
 	}
-	d.SetId("")
-	return diag.Diagnostics{
-		{
-			Severity: diag.Warning,
-			Summary:  "Users cannot be deleted from salesforce",
-			Detail:   "Destroy has deactivated the user and discarded it from Terraform state, but the record continues to exist, and the unique username remains taken",
-		},
-	}
+
+	resp.State.RemoveResource(ctx)
+	resp.AddWarning("Users cannot be deleted from salesforce", "Destroy has deactivated the user and discarded it from Terraform state, but the record continues to exist, and the unique username remains taken")
 }
