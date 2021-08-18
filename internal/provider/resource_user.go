@@ -90,17 +90,17 @@ type userResource struct {
 }
 
 type User struct {
-	Id                types.String `tfsdk:"id"`
-	Alias             string       `tfsdk:"alias"`
-	Email             string       `tfsdk:"email"`
-	EmailEncodingKey  *string      `tfsdk:"email_encoding_key"`
-	IsActive          *bool        `tfsdk:"is_active"`
-	LanguageLocaleKey *string      `tfsdk:"language_locale_key"`
-	LastName          string       `tfsdk:"last_name"`
-	LocaleSidKey      *string      `tfsdk:"locale_sid_key"`
-	ProfileID         string       `tfsdk:"profile_id"`
-	TimeZoneSidKey    *string      `tfsdk:"time_zone_sid_key"`
-	Username          string       `tfsdk:"username"`
+	Id                types.String `tfsdk:"id" force:"-"`
+	Alias             string       `tfsdk:"alias" force:",omitempty"`
+	Email             string       `tfsdk:"email" force:",omitempty"`
+	EmailEncodingKey  *string      `tfsdk:"email_encoding_key" force:",omitempty"`
+	IsActive          *bool        `tfsdk:"is_active" force:",omitempty"`
+	LanguageLocaleKey *string      `tfsdk:"language_locale_key" force:",omitempty"`
+	LastName          string       `tfsdk:"last_name" force:",omitempty"`
+	LocaleSidKey      *string      `tfsdk:"locale_sid_key" force:",omitempty"`
+	ProfileID         string       `tfsdk:"profile_id" force:",omitempty"`
+	TimeZoneSidKey    *string      `tfsdk:"time_zone_sid_key" force:",omitempty"`
+	Username          string       `tfsdk:"username" force:",omitempty"`
 }
 
 func (u User) ApiName() string {
@@ -157,20 +157,18 @@ func (u userResource) Create(ctx context.Context, req tfsdk.CreateResourceReques
 }
 
 func (u userResource) Read(ctx context.Context, req tfsdk.ReadResourceRequest, resp *tfsdk.ReadResourceResponse) {
-	id, diags := req.State.GetAttribute(ctx, tftypes.NewAttributePath().WithAttributeName("id"))
-	if diagsHasError(diags) {
+	var user User
+	if diags := req.State.Get(ctx, &user); diagsHasError(diags) {
 		resp.Diagnostics = diags
 		return
 	}
 
-	var user User
-	err := u.client.GetSObject(id.(types.String).Value, nil, &user)
-
+	err := u.client.GetSObject(user.Id.Value, nil, &user)
 	if err != nil {
 		if strings.Contains(err.Error(), "NOT_FOUND") {
 			resp.State.RemoveResource(ctx)
 		} else {
-			resp.AddError("Error Getting User", err.Error())
+			resp.AddError("Error getting User", err.Error())
 		}
 		return
 	}
@@ -191,6 +189,8 @@ func (u userResource) Update(ctx context.Context, req tfsdk.UpdateResourceReques
 		resp.AddError("Error updating User", err.Error())
 		return
 	}
+
+	resp.Diagnostics = resp.State.Set(ctx, &user)
 }
 
 func (u userResource) Delete(ctx context.Context, req tfsdk.DeleteResourceRequest, resp *tfsdk.DeleteResourceResponse) {
@@ -206,7 +206,7 @@ func (u userResource) Delete(ctx context.Context, req tfsdk.DeleteResourceReques
 		if strings.Contains(err.Error(), "NOT_FOUND") {
 			resp.State.RemoveResource(ctx)
 		} else {
-			resp.AddError("Error Getting User", err.Error())
+			resp.AddError("Error deleting User", err.Error())
 		}
 		return
 	}
