@@ -1,7 +1,5 @@
 package common
 
-import "github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
-
 // Salesforce displays some IDs in the old 15 digit case sensitive format (such as in the url)
 // if a user pastes the old format in their config it leads to permadiffs with the ids read from the API
 // the conversion source code is posted here
@@ -24,8 +22,4 @@ func NormalizeId(id string) string {
 		addon += string("ABCDEFGHIJKLMNOPQRSTUVWXYZ012345"[loop])
 	}
 	return id + addon
-}
-
-func SuppressIdDiff(k, old, new string, d *schema.ResourceData) bool {
-	return NormalizeId(old) == NormalizeId(new)
 }
