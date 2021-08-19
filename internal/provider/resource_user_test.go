@@ -6,29 +6,21 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/hashicorp/terraform-plugin-framework/tfsdk"
-	"github.com/hashicorp/terraform-plugin-go/tfprotov6"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/acctest"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 )
 
-func testAccPreCheck(t *testing.T) {
-}
-
 func TestAccResourceUser_basic(t *testing.T) {
 	t.Parallel()
+	t.Skip("Users cannot be deleted and there are limited licenses, skipping")
 
 	email := os.Getenv("SALESFORCE_USERNAME")
 	parts := strings.Split(email, "@")
 	username := fmt.Sprintf("%s+%s@%s", parts[0], acctest.RandString(10), parts[1])
 
 	resource.Test(t, resource.TestCase{
-		PreCheck: func() { testAccPreCheck(t) },
-		ProtoV6ProviderFactories: map[string]func() (tfprotov6.ProviderServer, error){
-			"salesforce": func() (tfprotov6.ProviderServer, error) {
-				return tfsdk.NewProtocol6Server(New()), nil
-			},
-		},
+		PreCheck:                 func() { testAccPreCheck(t) },
+		ProtoV6ProviderFactories: providerFactories,
 		Steps: []resource.TestStep{
 			{
 				Config: testAccResourceUser_basic(email, username),
