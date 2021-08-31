@@ -9,6 +9,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/hashicorp/terraform-plugin-go/tfprotov6"
 	"github.com/hashicorp/terraform-plugin-go/tftypes"
+	"github.com/hashicorp/terraform-provider-salesforce/internal/picklists"
 	"github.com/nimajalali/go-force/force"
 )
 
@@ -25,47 +26,71 @@ func (u userType) GetSchema(_ context.Context) (tfsdk.Schema, []*tfprotov6.Diagn
 			"alias": {
 				Type:     types.StringType,
 				Required: true,
+				Validators: []tfsdk.AttributeValidator{
+					emptyString{},
+				},
 			},
 			"email": {
 				Type:     types.StringType,
 				Required: true,
+				Validators: []tfsdk.AttributeValidator{
+					emptyString{},
+					email{},
+				},
 			},
 			"email_encoding_key": {
 				Type:     types.StringType,
-				Optional: true,
-				// Default:  "ISO-8859-1",
-			},
-			"is_active": {
-				Type:     types.BoolType,
-				Optional: true,
-				// Default:  true,
+				Required: true,
+				Validators: []tfsdk.AttributeValidator{
+					emptyString{},
+					stringInSlice{slice: picklists.EmailEncodingKeys},
+				},
 			},
 			"language_locale_key": {
 				Type:     types.StringType,
-				Optional: true,
-				// Default:  "en_US",
+				Required: true,
+				Validators: []tfsdk.AttributeValidator{
+					emptyString{},
+					stringInSlice{slice: picklists.LanguageLocaleKeys},
+				},
 			},
 			"last_name": {
 				Type:     types.StringType,
 				Required: true,
+				Validators: []tfsdk.AttributeValidator{
+					emptyString{},
+				},
 			},
 			"locale_sid_key": {
 				Type:     types.StringType,
-				Optional: true,
-				// Default:  "en_US",
+				Required: true,
+				Validators: []tfsdk.AttributeValidator{
+					emptyString{},
+					stringInSlice{slice: picklists.LocaleSidKeys},
+				},
 			},
 			"profile_id": {
 				Type:     types.StringType,
 				Required: true,
+				Validators: []tfsdk.AttributeValidator{
+					emptyString{},
+				},
 			},
 			"time_zone_sid_key": {
 				Type:     types.StringType,
-				Optional: true,
-				// Default:  "America/Los_Angeles",
+				Required: true,
+				Validators: []tfsdk.AttributeValidator{
+					emptyString{},
+					stringInSlice{slice: picklists.TimeZoneSidKeys},
+				},
 			},
 			"username": {
 				Type:     types.StringType,
 				Required: true,
+				Validators: []tfsdk.AttributeValidator{
+					emptyString{},
+					email{},
+				},
 			},
 		},
 	}, nil
@@ -91,15 +116,15 @@ type userResource struct {
 
 type User struct {
 	Id                types.String `tfsdk:"id" force:"-"`
+	IsActive          *bool        `tfsdk:"-" force:",omitempty"`
 	Alias             string       `tfsdk:"alias" force:",omitempty"`
 	Email             string       `tfsdk:"email" force:",omitempty"`
-	EmailEncodingKey  *string      `tfsdk:"email_encoding_key" force:",omitempty"`
-	IsActive          *bool        `tfsdk:"is_active" force:",omitempty"`
-	LanguageLocaleKey *string      `tfsdk:"language_locale_key" force:",omitempty"`
+	EmailEncodingKey  string       `tfsdk:"email_encoding_key" force:",omitempty"`
+	LanguageLocaleKey string       `tfsdk:"language_locale_key" force:",omitempty"`
 	LastName          string       `tfsdk:"last_name" force:",omitempty"`
-	LocaleSidKey      *string      `tfsdk:"locale_sid_key" force:",omitempty"`
+	LocaleSidKey      string       `tfsdk:"locale_sid_key" force:",omitempty"`
 	ProfileID         string       `tfsdk:"profile_id" force:",omitempty"`
-	TimeZoneSidKey    *string      `tfsdk:"time_zone_sid_key" force:",omitempty"`
+	TimeZoneSidKey    string       `tfsdk:"time_zone_sid_key" force:",omitempty"`
 	Username          string       `tfsdk:"username" force:",omitempty"`
 }
 
@@ -111,42 +136,14 @@ func (u User) ExternalIdApiName() string {
 	return ""
 }
 
-func (u User) withDefaults() User {
-	emailEncodingKey := "ISO-8859-1"
-	isActive := true
-	languageLocaleKey := "en_US"
-	localeSidKey := "en_US"
-	timeZoneSidKey := "America/Los_Angeles"
-
-	if u.EmailEncodingKey == nil {
-		u.EmailEncodingKey = &emailEncodingKey
-	}
-	if u.IsActive == nil {
-		u.IsActive = &isActive
-	}
-	if u.LanguageLocaleKey == nil {
-		u.LanguageLocaleKey = &languageLocaleKey
-	}
-	if u.LocaleSidKey == nil {
-		u.LocaleSidKey = &localeSidKey
-	}
-	if u.TimeZoneSidKey == nil {
-		u.TimeZoneSidKey = &timeZoneSidKey
-	}
-
-	return u
-}
-
 func (u userResource) Create(ctx context.Context, req tfsdk.CreateResourceRequest, resp *tfsdk.CreateResourceResponse) {
 	var user User
 	if diags := req.Plan.Get(ctx, &user); diagsHasError(diags) {
 		resp.Diagnostics = diags
 		return
 	}
-	// non-pointer method will not mutate the user declared in this function
-	// this is useful so that State.Set doesn't error with a mismatch with the plan
-	// where the unset fields were of course, unset.
-	sfResp, err := u.client.InsertSObject(user.withDefaults())
+
+	sfResp, err := u.client.InsertSObject(user)
 	if err != nil {
 		resp.AddError("Error inserting User", err.Error())
 		return
@@ -182,10 +179,8 @@ func (u userResource) Update(ctx context.Context, req tfsdk.UpdateResourceReques
 		resp.Diagnostics = diags
 		return
 	}
-	// non-pointer method will not mutate the user declared in this function
-	// this is useful so that State.Set doesn't error with a mismatch with the plan
-	// where the unset fields were of course, unset.
-	if err := u.client.UpdateSObject(user.Id.Value, user.withDefaults()); err != nil {
+
+	if err := u.client.UpdateSObject(user.Id.Value, user); err != nil {
 		resp.AddError("Error updating User", err.Error())
 		return
 	}

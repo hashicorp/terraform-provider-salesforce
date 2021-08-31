@@ -28,8 +28,9 @@ func (p *provider) GetSchema(_ context.Context) (tfsdk.Schema, []*tfprotov6.Diag
 				Optional: true,
 			},
 			"private_key": {
-				Type:     types.StringType,
-				Optional: true,
+				Type:      types.StringType,
+				Optional:  true,
+				Sensitive: true,
 			},
 			"api_version": {
 				Type:     types.StringType,
