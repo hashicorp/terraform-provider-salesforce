@@ -11,22 +11,11 @@ import (
 	"github.com/hashicorp/terraform-plugin-go/tfprotov6"
 )
 
-type descriptions struct {
-}
-
-func (descriptions) Description(ctx context.Context) string {
-	return ""
-}
-
-func (descriptions) MarkdownDescription(ctx context.Context) string {
-	return ""
-}
-
 type emptyString struct {
-	descriptions
+	emptyDescriptions
 }
 
-func (emptyString) Validate(ctx context.Context, req tfsdk.ValidateAttributeRequest, resp *tfsdk.ValidateAttributeResponse) {
+func (emptyString) Validate(_ context.Context, req tfsdk.ValidateAttributeRequest, resp *tfsdk.ValidateAttributeResponse) {
 	attr := req.AttributeConfig.(types.String)
 	if attr.Unknown {
 		return
@@ -50,10 +39,10 @@ func isEmailValid(e string) bool {
 }
 
 type email struct {
-	descriptions
+	emptyDescriptions
 }
 
-func (email) Validate(ctx context.Context, req tfsdk.ValidateAttributeRequest, resp *tfsdk.ValidateAttributeResponse) {
+func (email) Validate(_ context.Context, req tfsdk.ValidateAttributeRequest, resp *tfsdk.ValidateAttributeResponse) {
 	attr := req.AttributeConfig.(types.String)
 	if attr.Unknown {
 		return
@@ -69,10 +58,10 @@ func (email) Validate(ctx context.Context, req tfsdk.ValidateAttributeRequest, r
 
 type stringInSlice struct {
 	slice []string
-	descriptions
+	emptyDescriptions
 }
 
-func (s stringInSlice) Validate(ctx context.Context, req tfsdk.ValidateAttributeRequest, resp *tfsdk.ValidateAttributeResponse) {
+func (s stringInSlice) Validate(_ context.Context, req tfsdk.ValidateAttributeRequest, resp *tfsdk.ValidateAttributeResponse) {
 	attr := req.AttributeConfig.(types.String)
 	if attr.Unknown {
 		return

@@ -13,6 +13,18 @@ import (
 	"github.com/nimajalali/go-force/force"
 )
 
+type defaultEmailEncodingKey struct {
+	emptyDescriptions
+}
+
+func (defaultEmailEncodingKey) Modify(_ context.Context, req tfsdk.ModifyAttributePlanRequest, resp *tfsdk.ModifyAttributePlanResponse) {
+	if req.AttributePlan.(types.String).Null {
+		resp.AttributePlan = types.String{
+			Value: "UTF-8",
+		}
+	}
+}
+
 type userType struct {
 }
 
@@ -34,23 +46,24 @@ func (u userType) GetSchema(_ context.Context) (tfsdk.Schema, []*tfprotov6.Diagn
 				Type:     types.StringType,
 				Required: true,
 				Validators: []tfsdk.AttributeValidator{
-					emptyString{},
 					email{},
 				},
 			},
 			"email_encoding_key": {
 				Type:     types.StringType,
-				Required: true,
-				Validators: []tfsdk.AttributeValidator{
-					emptyString{},
-					stringInSlice{slice: picklists.EmailEncodingKeys},
+				Optional: true,
+				Computed: true,
+				// Validators: []tfsdk.AttributeValidator{
+				// 	stringInSlice{slice: picklists.EmailEncodingKeys},
+				// },
+				PlanModifiers: tfsdk.AttributePlanModifiers{
+					defaultEmailEncodingKey{},
 				},
 			},
 			"language_locale_key": {
 				Type:     types.StringType,
 				Required: true,
 				Validators: []tfsdk.AttributeValidator{
-					emptyString{},
 					stringInSlice{slice: picklists.LanguageLocaleKeys},
 				},
 			},
@@ -65,7 +78,6 @@ func (u userType) GetSchema(_ context.Context) (tfsdk.Schema, []*tfprotov6.Diagn
 				Type:     types.StringType,
 				Required: true,
 				Validators: []tfsdk.AttributeValidator{
-					emptyString{},
 					stringInSlice{slice: picklists.LocaleSidKeys},
 				},
 			},
@@ -75,12 +87,14 @@ func (u userType) GetSchema(_ context.Context) (tfsdk.Schema, []*tfprotov6.Diagn
 				Validators: []tfsdk.AttributeValidator{
 					emptyString{},
 				},
+				PlanModifiers: tfsdk.AttributePlanModifiers{
+					NormalizeId{},
+				},
 			},
 			"time_zone_sid_key": {
 				Type:     types.StringType,
 				Required: true,
 				Validators: []tfsdk.AttributeValidator{
-					emptyString{},
 					stringInSlice{slice: picklists.TimeZoneSidKeys},
 				},
 			},
@@ -88,7 +102,6 @@ func (u userType) GetSchema(_ context.Context) (tfsdk.Schema, []*tfprotov6.Diagn
 				Type:     types.StringType,
 				Required: true,
 				Validators: []tfsdk.AttributeValidator{
-					emptyString{},
 					email{},
 				},
 			},

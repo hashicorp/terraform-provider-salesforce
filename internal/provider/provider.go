@@ -8,7 +8,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/hashicorp/terraform-plugin-go/tfprotov6"
 	"github.com/hashicorp/terraform-plugin-go/tftypes"
-	"github.com/hashicorp/terraform-provider-salesforce/internal/common"
+	"github.com/hashicorp/terraform-provider-salesforce/internal/auth"
 	"github.com/nimajalali/go-force/force"
 )
 
@@ -147,7 +147,7 @@ func (p *provider) Configure(ctx context.Context, req tfsdk.ConfigureProviderReq
 		})
 		return
 	}
-	client, err := common.Client(common.Config{
+	client, err := auth.Client(auth.Config{
 		ApiVersion: config.ApiVersion.Value,
 		Username:   config.Username.Value,
 		ClientId:   config.ClientId.Value,
