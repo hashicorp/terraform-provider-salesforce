@@ -37,13 +37,16 @@ resource "salesforce_user" "example" {
 
 - **alias** (String)
 - **email** (String)
+- **last_name** (String)
+- **profile_id** (String)
+- **username** (String)
+
+### Optional
+
 - **email_encoding_key** (String)
 - **language_locale_key** (String)
-- **last_name** (String)
 - **locale_sid_key** (String)
-- **profile_id** (String)
 - **time_zone_sid_key** (String)
-- **username** (String)
 
 ### Read-Only
 

@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/hashicorp/terraform-plugin-framework/attr"
 	"github.com/hashicorp/terraform-plugin-framework/tfsdk"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/hashicorp/terraform-plugin-go/tfprotov6"
@@ -13,16 +14,21 @@ import (
 	"github.com/nimajalali/go-force/force"
 )
 
-type defaultEmailEncodingKey struct {
-	emptyDescriptions
-}
-
-func (defaultEmailEncodingKey) Modify(_ context.Context, req tfsdk.ModifyAttributePlanRequest, resp *tfsdk.ModifyAttributePlanResponse) {
-	if req.AttributePlan.(types.String).Null {
-		resp.AttributePlan = types.String{
+var userDefaults = resourceDefaults{
+	defaults: map[string]attr.Value{
+		tftypes.NewAttributePath().WithAttributeName("email_encoding_key").String(): types.String{
 			Value: "UTF-8",
-		}
-	}
+		},
+		tftypes.NewAttributePath().WithAttributeName("language_locale_key").String(): types.String{
+			Value: "en_US",
+		},
+		tftypes.NewAttributePath().WithAttributeName("locale_sid_key").String(): types.String{
+			Value: "en_US",
+		},
+		tftypes.NewAttributePath().WithAttributeName("time_zone_sid_key").String(): types.String{
+			Value: "America/New_York",
+		},
+	},
 }
 
 type userType struct {
@@ -53,18 +59,28 @@ func (u userType) GetSchema(_ context.Context) (tfsdk.Schema, []*tfprotov6.Diagn
 				Type:     types.StringType,
 				Optional: true,
 				Computed: true,
-				// Validators: []tfsdk.AttributeValidator{
-				// 	stringInSlice{slice: picklists.EmailEncodingKeys},
-				// },
+				Validators: []tfsdk.AttributeValidator{
+					stringInSlice{
+						slice:    picklists.EmailEncodingKeys,
+						optional: true,
+					},
+				},
 				PlanModifiers: tfsdk.AttributePlanModifiers{
-					defaultEmailEncodingKey{},
+					userDefaults,
 				},
 			},
 			"language_locale_key": {
 				Type:     types.StringType,
-				Required: true,
+				Optional: true,
+				Computed: true,
 				Validators: []tfsdk.AttributeValidator{
-					stringInSlice{slice: picklists.LanguageLocaleKeys},
+					stringInSlice{
+						slice:    picklists.LanguageLocaleKeys,
+						optional: true,
+					},
+				},
+				PlanModifiers: tfsdk.AttributePlanModifiers{
+					userDefaults,
 				},
 			},
 			"last_name": {
@@ -76,9 +92,16 @@ func (u userType) GetSchema(_ context.Context) (tfsdk.Schema, []*tfprotov6.Diagn
 			},
 			"locale_sid_key": {
 				Type:     types.StringType,
-				Required: true,
+				Optional: true,
+				Computed: true,
 				Validators: []tfsdk.AttributeValidator{
-					stringInSlice{slice: picklists.LocaleSidKeys},
+					stringInSlice{
+						slice:    picklists.LocaleSidKeys,
+						optional: true,
+					},
+				},
+				PlanModifiers: tfsdk.AttributePlanModifiers{
+					userDefaults,
 				},
 			},
 			"profile_id": {
@@ -93,9 +116,16 @@ func (u userType) GetSchema(_ context.Context) (tfsdk.Schema, []*tfprotov6.Diagn
 			},
 			"time_zone_sid_key": {
 				Type:     types.StringType,
-				Required: true,
+				Optional: true,
+				Computed: true,
 				Validators: []tfsdk.AttributeValidator{
-					stringInSlice{slice: picklists.TimeZoneSidKeys},
+					stringInSlice{
+						slice:    picklists.TimeZoneSidKeys,
+						optional: true,
+					},
+				},
+				PlanModifiers: tfsdk.AttributePlanModifiers{
+					userDefaults,
 				},
 			},
 			"username": {

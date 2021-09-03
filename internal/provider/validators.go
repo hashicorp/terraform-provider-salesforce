@@ -57,13 +57,17 @@ func (email) Validate(_ context.Context, req tfsdk.ValidateAttributeRequest, res
 }
 
 type stringInSlice struct {
-	slice []string
+	slice    []string
+	optional bool
 	emptyDescriptions
 }
 
 func (s stringInSlice) Validate(_ context.Context, req tfsdk.ValidateAttributeRequest, resp *tfsdk.ValidateAttributeResponse) {
 	attr := req.AttributeConfig.(types.String)
 	if attr.Unknown {
+		return
+	}
+	if s.optional && attr.Null {
 		return
 	}
 	for _, item := range s.slice {

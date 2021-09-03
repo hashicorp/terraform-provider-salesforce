@@ -3,6 +3,7 @@ package provider
 import (
 	"context"
 
+	"github.com/hashicorp/terraform-plugin-framework/attr"
 	"github.com/hashicorp/terraform-plugin-framework/tfsdk"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 )
@@ -36,7 +37,32 @@ type NormalizeId struct {
 }
 
 func (NormalizeId) Modify(_ context.Context, req tfsdk.ModifyAttributePlanRequest, resp *tfsdk.ModifyAttributePlanResponse) {
-	resp.AttributePlan = types.String{
-		Value: normalizeId(req.AttributePlan.(types.String).Value),
+	if req.AttributeState == nil {
+		resp.AttributePlan = req.AttributePlan
+		return
+	}
+	plan := req.AttributePlan.(types.String)
+	state := req.AttributeState.(types.String)
+	if normalizeId(plan.Value) == normalizeId(state.Value) {
+		resp.AttributePlan = state
+	} else {
+		resp.AttributePlan = plan
+	}
+}
+
+type resourceDefaults struct {
+	defaults map[string]attr.Value
+	emptyDescriptions
+}
+
+func (r resourceDefaults) Modify(_ context.Context, req tfsdk.ModifyAttributePlanRequest, resp *tfsdk.ModifyAttributePlanResponse) {
+	resp.AttributePlan = req.AttributePlan
+	// TODO need to check if null, not supported generically for attr.Value
+	// for now all my defaults happen to be string so this is fine for now
+	if req.AttributePlan.(types.String).Null {
+		def, ok := r.defaults[req.AttributePath.String()]
+		if ok {
+			resp.AttributePlan = def
+		}
 	}
 }
