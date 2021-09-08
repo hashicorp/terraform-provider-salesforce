@@ -8,7 +8,6 @@ import (
 
 	"github.com/hashicorp/terraform-plugin-framework/tfsdk"
 	"github.com/hashicorp/terraform-plugin-framework/types"
-	"github.com/hashicorp/terraform-plugin-go/tfprotov6"
 )
 
 type emptyString struct {
@@ -21,11 +20,7 @@ func (emptyString) Validate(_ context.Context, req tfsdk.ValidateAttributeReques
 		return
 	}
 	if attr.Value == "" {
-		resp.Diagnostics = append(resp.Diagnostics, &tfprotov6.Diagnostic{
-			Severity:  tfprotov6.DiagnosticSeverityError,
-			Attribute: req.AttributePath,
-			Summary:   "Empty string",
-		})
+		resp.Diagnostics.AddAttributeError(req.AttributePath, "Empty String", "")
 	}
 }
 
@@ -48,11 +43,7 @@ func (email) Validate(_ context.Context, req tfsdk.ValidateAttributeRequest, res
 		return
 	}
 	if !isEmailValid(attr.Value) {
-		resp.Diagnostics = append(resp.Diagnostics, &tfprotov6.Diagnostic{
-			Severity:  tfprotov6.DiagnosticSeverityError,
-			Attribute: req.AttributePath,
-			Summary:   "Invalid email address",
-		})
+		resp.Diagnostics.AddAttributeError(req.AttributePath, "Invalid email address", "")
 	}
 }
 
@@ -75,10 +66,5 @@ func (s stringInSlice) Validate(_ context.Context, req tfsdk.ValidateAttributeRe
 			return
 		}
 	}
-	resp.Diagnostics = append(resp.Diagnostics, &tfprotov6.Diagnostic{
-		Severity:  tfprotov6.DiagnosticSeverityError,
-		Attribute: req.AttributePath,
-		Summary:   "Invalid string",
-		Detail:    fmt.Sprintf("String must be one of: [%s]", strings.Join(s.slice, ", ")),
-	})
+	resp.Diagnostics.AddAttributeError(req.AttributePath, "Invalid string", fmt.Sprintf("String must be one of: [%s]", strings.Join(s.slice, ", ")))
 }

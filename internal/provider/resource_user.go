@@ -6,9 +6,9 @@ import (
 	"strings"
 
 	"github.com/hashicorp/terraform-plugin-framework/attr"
+	"github.com/hashicorp/terraform-plugin-framework/diag"
 	"github.com/hashicorp/terraform-plugin-framework/tfsdk"
 	"github.com/hashicorp/terraform-plugin-framework/types"
-	"github.com/hashicorp/terraform-plugin-go/tfprotov6"
 	"github.com/hashicorp/terraform-plugin-go/tftypes"
 	"github.com/hashicorp/terraform-provider-salesforce/internal/picklists"
 	"github.com/nimajalali/go-force/force"
@@ -34,7 +34,7 @@ var userDefaults = resourceDefaults{
 type userType struct {
 }
 
-func (u userType) GetSchema(_ context.Context) (tfsdk.Schema, []*tfprotov6.Diagnostic) {
+func (u userType) GetSchema(_ context.Context) (tfsdk.Schema, diag.Diagnostics) {
 	return tfsdk.Schema{
 		Attributes: map[string]tfsdk.Attribute{
 			"id": {
@@ -139,15 +139,11 @@ func (u userType) GetSchema(_ context.Context) (tfsdk.Schema, []*tfprotov6.Diagn
 	}, nil
 }
 
-func (u userType) NewResource(_ context.Context, p tfsdk.Provider) (tfsdk.Resource, []*tfprotov6.Diagnostic) {
+func (u userType) NewResource(_ context.Context, p tfsdk.Provider) (tfsdk.Resource, diag.Diagnostics) {
 	prov, ok := p.(*provider)
 	if !ok {
-		return nil, []*tfprotov6.Diagnostic{
-			{
-				Severity: tfprotov6.DiagnosticSeverityError,
-				Summary:  "Error converting provider",
-				Detail:   fmt.Sprintf("An unexpected error was encountered converting the provider. This is always a bug in the provider.\n\nType: %T", p),
-			},
+		return nil, diag.Diagnostics{
+			diag.NewErrorDiagnostic("Error converting provider", fmt.Sprintf("An unexpected error was encountered converting the provider. This is always a bug in the provider.\n\nType: %T", p)),
 		}
 	}
 	return userResource{client: prov.client}, nil
@@ -181,7 +177,7 @@ func (u User) ExternalIdApiName() string {
 
 func (u userResource) Create(ctx context.Context, req tfsdk.CreateResourceRequest, resp *tfsdk.CreateResourceResponse) {
 	var user User
-	if diags := req.Plan.Get(ctx, &user); diagsHasError(diags) {
+	if diags := req.Plan.Get(ctx, &user); diags.HasError() {
 		resp.Diagnostics = diags
 		return
 	}
@@ -198,7 +194,7 @@ func (u userResource) Create(ctx context.Context, req tfsdk.CreateResourceReques
 
 func (u userResource) Read(ctx context.Context, req tfsdk.ReadResourceRequest, resp *tfsdk.ReadResourceResponse) {
 	var user User
-	if diags := req.State.Get(ctx, &user); diagsHasError(diags) {
+	if diags := req.State.Get(ctx, &user); diags.HasError() {
 		resp.Diagnostics = diags
 		return
 	}
@@ -218,7 +214,7 @@ func (u userResource) Read(ctx context.Context, req tfsdk.ReadResourceRequest, r
 
 func (u userResource) Update(ctx context.Context, req tfsdk.UpdateResourceRequest, resp *tfsdk.UpdateResourceResponse) {
 	var user User
-	if diags := req.Plan.Get(ctx, &user); diagsHasError(diags) {
+	if diags := req.Plan.Get(ctx, &user); diags.HasError() {
 		resp.Diagnostics = diags
 		return
 	}
@@ -233,7 +229,7 @@ func (u userResource) Update(ctx context.Context, req tfsdk.UpdateResourceReques
 
 func (u userResource) Delete(ctx context.Context, req tfsdk.DeleteResourceRequest, resp *tfsdk.DeleteResourceResponse) {
 	id, diags := req.State.GetAttribute(ctx, tftypes.NewAttributePath().WithAttributeName("id"))
-	if diagsHasError(diags) {
+	if diags.HasError() {
 		resp.Diagnostics = diags
 		return
 	}

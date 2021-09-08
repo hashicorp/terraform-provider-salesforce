@@ -2,11 +2,12 @@ package provider
 
 import (
 	"context"
+	"fmt"
 	"os"
 
+	"github.com/hashicorp/terraform-plugin-framework/diag"
 	"github.com/hashicorp/terraform-plugin-framework/tfsdk"
 	"github.com/hashicorp/terraform-plugin-framework/types"
-	"github.com/hashicorp/terraform-plugin-go/tfprotov6"
 	"github.com/hashicorp/terraform-plugin-go/tftypes"
 	"github.com/hashicorp/terraform-provider-salesforce/internal/auth"
 	"github.com/nimajalali/go-force/force"
@@ -20,7 +21,7 @@ type provider struct {
 	client *force.ForceApi
 }
 
-func (p *provider) GetSchema(_ context.Context) (tfsdk.Schema, []*tfprotov6.Diagnostic) {
+func (p *provider) GetSchema(_ context.Context) (tfsdk.Schema, diag.Diagnostics) {
 	return tfsdk.Schema{
 		Attributes: map[string]tfsdk.Attribute{
 			"client_id": {
@@ -53,46 +54,26 @@ type providerData struct {
 
 func (p *provider) Configure(ctx context.Context, req tfsdk.ConfigureProviderRequest, resp *tfsdk.ConfigureProviderResponse) {
 	var config providerData
-	if diags := req.Config.Get(ctx, &config); diagsHasError(diags) {
+	if diags := req.Config.Get(ctx, &config); diags.HasError() {
 		resp.Diagnostics = diags
 		return
 	}
 
 	// interpolation not allowed in provider block
 	if config.ClientId.Unknown {
-		resp.Diagnostics = append(resp.Diagnostics, &tfprotov6.Diagnostic{
-			Severity:  tfprotov6.DiagnosticSeverityError,
-			Summary:   "Can't interpolate into provider block",
-			Detail:    "Interpolating that value into the provider block doesn't give the provider enough information to run. Try hard-coding the value, instead.",
-			Attribute: tftypes.NewAttributePath().WithAttributeName("client_id"),
-		})
+		addCannotInterpolateInProviderBlockError(resp, "client_id")
 		return
 	}
 	if config.PrivateKey.Unknown {
-		resp.Diagnostics = append(resp.Diagnostics, &tfprotov6.Diagnostic{
-			Severity:  tfprotov6.DiagnosticSeverityError,
-			Summary:   "Can't interpolate into provider block",
-			Detail:    "Interpolating that value into the provider block doesn't give the provider enough information to run. Try hard-coding the value, instead.",
-			Attribute: tftypes.NewAttributePath().WithAttributeName("private_key"),
-		})
+		addCannotInterpolateInProviderBlockError(resp, "private_key")
 		return
 	}
 	if config.ApiVersion.Unknown {
-		resp.Diagnostics = append(resp.Diagnostics, &tfprotov6.Diagnostic{
-			Severity:  tfprotov6.DiagnosticSeverityError,
-			Summary:   "Can't interpolate into provider block",
-			Detail:    "Interpolating that value into the provider block doesn't give the provider enough information to run. Try hard-coding the value, instead.",
-			Attribute: tftypes.NewAttributePath().WithAttributeName("api_version"),
-		})
+		addCannotInterpolateInProviderBlockError(resp, "api_version")
 		return
 	}
 	if config.Username.Unknown {
-		resp.Diagnostics = append(resp.Diagnostics, &tfprotov6.Diagnostic{
-			Severity:  tfprotov6.DiagnosticSeverityError,
-			Summary:   "Can't interpolate into provider block",
-			Detail:    "Interpolating that value into the provider block doesn't give the provider enough information to run. Try hard-coding the value, instead.",
-			Attribute: tftypes.NewAttributePath().WithAttributeName("username"),
-		})
+		addCannotInterpolateInProviderBlockError(resp, "username")
 		return
 	}
 
@@ -112,39 +93,19 @@ func (p *provider) Configure(ctx context.Context, req tfsdk.ConfigureProviderReq
 
 	// required if still unset
 	if config.ClientId.Value == "" {
-		resp.Diagnostics = append(resp.Diagnostics, &tfprotov6.Diagnostic{
-			Severity:  tfprotov6.DiagnosticSeverityError,
-			Summary:   "Invalid provider config",
-			Detail:    "client_id must be set.",
-			Attribute: tftypes.NewAttributePath().WithAttributeName("client_id"),
-		})
+		addAttributeMustBeSetError(resp, "client_id")
 		return
 	}
 	if config.PrivateKey.Value == "" {
-		resp.Diagnostics = append(resp.Diagnostics, &tfprotov6.Diagnostic{
-			Severity:  tfprotov6.DiagnosticSeverityError,
-			Summary:   "Invalid provider config",
-			Detail:    "private_key must be set.",
-			Attribute: tftypes.NewAttributePath().WithAttributeName("private_key"),
-		})
+		addAttributeMustBeSetError(resp, "private_key")
 		return
 	}
 	if config.ApiVersion.Value == "" {
-		resp.Diagnostics = append(resp.Diagnostics, &tfprotov6.Diagnostic{
-			Severity:  tfprotov6.DiagnosticSeverityError,
-			Summary:   "Invalid provider config",
-			Detail:    "api_version must be set.",
-			Attribute: tftypes.NewAttributePath().WithAttributeName("api_version"),
-		})
+		addAttributeMustBeSetError(resp, "api_version")
 		return
 	}
 	if config.Username.Value == "" {
-		resp.Diagnostics = append(resp.Diagnostics, &tfprotov6.Diagnostic{
-			Severity:  tfprotov6.DiagnosticSeverityError,
-			Summary:   "Invalid provider config",
-			Detail:    "username must be set.",
-			Attribute: tftypes.NewAttributePath().WithAttributeName("username"),
-		})
+		addAttributeMustBeSetError(resp, "username")
 		return
 	}
 	client, err := auth.Client(auth.Config{
@@ -154,24 +115,36 @@ func (p *provider) Configure(ctx context.Context, req tfsdk.ConfigureProviderReq
 		PrivateKey: config.PrivateKey.Value,
 	})
 	if err != nil {
-		resp.Diagnostics = append(resp.Diagnostics, &tfprotov6.Diagnostic{
-			Severity: tfprotov6.DiagnosticSeverityError,
-			Summary:  "Error creating salesforce client",
-			Detail:   err.Error(),
-		})
+		resp.AddError("Error creating salesforce client", err.Error())
 		return
 	}
 	p.client = client
 }
 
-func (p *provider) GetResources(_ context.Context) (map[string]tfsdk.ResourceType, []*tfprotov6.Diagnostic) {
+func (p *provider) GetResources(_ context.Context) (map[string]tfsdk.ResourceType, diag.Diagnostics) {
 	return map[string]tfsdk.ResourceType{
 		"salesforce_user": userType{},
 	}, nil
 }
 
-func (p *provider) GetDataSources(_ context.Context) (map[string]tfsdk.DataSourceType, []*tfprotov6.Diagnostic) {
+func (p *provider) GetDataSources(_ context.Context) (map[string]tfsdk.DataSourceType, diag.Diagnostics) {
 	return map[string]tfsdk.DataSourceType{
 		"salesforce_profile": profileType{},
 	}, nil
+}
+
+func addAttributeMustBeSetError(resp *tfsdk.ConfigureProviderResponse, attr string) {
+	resp.AddAttributeError(
+		tftypes.NewAttributePath().WithAttributeName(attr),
+		"Invalid provider config",
+		fmt.Sprintf("%s must be set.", attr),
+	)
+}
+
+func addCannotInterpolateInProviderBlockError(resp *tfsdk.ConfigureProviderResponse, attr string) {
+	resp.AddAttributeError(
+		tftypes.NewAttributePath().WithAttributeName(attr),
+		"Can't interpolate into provider block",
+		"Interpolating that value into the provider block doesn't give the provider enough information to run. Try hard-coding the value, instead.",
+	)
 }
