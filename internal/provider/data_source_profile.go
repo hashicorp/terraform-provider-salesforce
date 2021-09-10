@@ -11,10 +11,10 @@ import (
 	"github.com/nimajalali/go-force/sobjects"
 )
 
-type profileType struct {
+type profileDatasourceType struct {
 }
 
-func (p profileType) GetSchema(_ context.Context) (tfsdk.Schema, diag.Diagnostics) {
+func (profileDatasourceType) GetSchema(_ context.Context) (tfsdk.Schema, diag.Diagnostics) {
 	return tfsdk.Schema{
 		Attributes: map[string]tfsdk.Attribute{
 			"id": {
@@ -29,12 +29,10 @@ func (p profileType) GetSchema(_ context.Context) (tfsdk.Schema, diag.Diagnostic
 	}, nil
 }
 
-func (p profileType) NewDataSource(_ context.Context, prov tfsdk.Provider) (tfsdk.DataSource, diag.Diagnostics) {
+func (p profileDatasourceType) NewDataSource(_ context.Context, prov tfsdk.Provider) (tfsdk.DataSource, diag.Diagnostics) {
 	provider, ok := prov.(*provider)
 	if !ok {
-		return nil, diag.Diagnostics{
-			diag.NewErrorDiagnostic("Error converting provider", fmt.Sprintf("An unexpected error was encountered converting the provider. This is always a bug in the provider.\n\nType: %T", p)),
-		}
+		return nil, diag.Diagnostics{errorConvertingProvider(p)}
 	}
 	return profileDataSource{client: provider.client}, nil
 }
@@ -48,13 +46,11 @@ type profileData struct {
 	Name string       `tfsdk:"name"`
 }
 
-type Profile struct {
-	sobjects.BaseSObject
-}
-
 type ProfileQueryResponse struct {
 	sobjects.BaseQuery
-	Records []Profile `json:"Records" force:"records"`
+	Records []struct {
+		sobjects.BaseSObject
+	} `json:"Records" force:"records"`
 }
 
 func (p profileDataSource) Read(ctx context.Context, req tfsdk.ReadDataSourceRequest, resp *tfsdk.ReadDataSourceResponse) {

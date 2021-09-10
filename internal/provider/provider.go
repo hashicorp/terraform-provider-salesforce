@@ -123,14 +123,20 @@ func (p *provider) Configure(ctx context.Context, req tfsdk.ConfigureProviderReq
 
 func (p *provider) GetResources(_ context.Context) (map[string]tfsdk.ResourceType, diag.Diagnostics) {
 	return map[string]tfsdk.ResourceType{
-		"salesforce_user": userType{},
+		"salesforce_profile": profileType{},
+		"salesforce_user":    userType{},
 	}, nil
 }
 
 func (p *provider) GetDataSources(_ context.Context) (map[string]tfsdk.DataSourceType, diag.Diagnostics) {
 	return map[string]tfsdk.DataSourceType{
-		"salesforce_profile": profileType{},
+		"salesforce_profile":      profileDatasourceType{},
+		"salesforce_user_license": userLicenseDatasourceType{},
 	}, nil
+}
+
+func errorConvertingProvider(typ interface{}) diag.ErrorDiagnostic {
+	return diag.NewErrorDiagnostic("Error converting provider", fmt.Sprintf("An unexpected error was encountered converting the provider. This is always a bug in the provider.\n\nType: %T", typ))
 }
 
 func addAttributeMustBeSetError(resp *tfsdk.ConfigureProviderResponse, attr string) {

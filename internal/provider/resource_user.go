@@ -2,7 +2,6 @@ package provider
 
 import (
 	"context"
-	"fmt"
 	"strings"
 
 	"github.com/hashicorp/terraform-plugin-framework/attr"
@@ -34,7 +33,7 @@ var userDefaults = resourceDefaults{
 type userType struct {
 }
 
-func (u userType) GetSchema(_ context.Context) (tfsdk.Schema, diag.Diagnostics) {
+func (userType) GetSchema(_ context.Context) (tfsdk.Schema, diag.Diagnostics) {
 	return tfsdk.Schema{
 		Attributes: map[string]tfsdk.Attribute{
 			"id": {
@@ -142,9 +141,7 @@ func (u userType) GetSchema(_ context.Context) (tfsdk.Schema, diag.Diagnostics) 
 func (u userType) NewResource(_ context.Context, p tfsdk.Provider) (tfsdk.Resource, diag.Diagnostics) {
 	prov, ok := p.(*provider)
 	if !ok {
-		return nil, diag.Diagnostics{
-			diag.NewErrorDiagnostic("Error converting provider", fmt.Sprintf("An unexpected error was encountered converting the provider. This is always a bug in the provider.\n\nType: %T", p)),
-		}
+		return nil, diag.Diagnostics{errorConvertingProvider(u)}
 	}
 	return userResource{client: prov.client}, nil
 }
@@ -154,7 +151,7 @@ type userResource struct {
 }
 
 type User struct {
-	Id                types.String `tfsdk:"id" force:"-"`
+	ID                types.String `tfsdk:"id" force:"-"`
 	IsActive          *bool        `tfsdk:"-" force:",omitempty"`
 	Alias             string       `tfsdk:"alias" force:",omitempty"`
 	Email             string       `tfsdk:"email" force:",omitempty"`
@@ -167,11 +164,11 @@ type User struct {
 	Username          string       `tfsdk:"username" force:",omitempty"`
 }
 
-func (u User) ApiName() string {
+func (User) ApiName() string {
 	return "User"
 }
 
-func (u User) ExternalIdApiName() string {
+func (User) ExternalIdApiName() string {
 	return ""
 }
 
@@ -187,7 +184,7 @@ func (u userResource) Create(ctx context.Context, req tfsdk.CreateResourceReques
 		resp.AddError("Error inserting User", err.Error())
 		return
 	}
-	user.Id = types.String{Value: sfResp.Id}
+	user.ID = types.String{Value: sfResp.Id}
 
 	resp.Diagnostics = resp.State.Set(ctx, &user)
 }
@@ -199,7 +196,7 @@ func (u userResource) Read(ctx context.Context, req tfsdk.ReadResourceRequest, r
 		return
 	}
 
-	err := u.client.GetSObject(user.Id.Value, nil, &user)
+	err := u.client.GetSObject(user.ID.Value, nil, &user)
 	if err != nil {
 		if strings.Contains(err.Error(), "NOT_FOUND") {
 			resp.State.RemoveResource(ctx)
@@ -219,7 +216,7 @@ func (u userResource) Update(ctx context.Context, req tfsdk.UpdateResourceReques
 		return
 	}
 
-	if err := u.client.UpdateSObject(user.Id.Value, user); err != nil {
+	if err := u.client.UpdateSObject(user.ID.Value, user); err != nil {
 		resp.AddError("Error updating User", err.Error())
 		return
 	}

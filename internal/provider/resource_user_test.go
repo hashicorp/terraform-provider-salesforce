@@ -12,11 +12,16 @@ import (
 
 func TestAccResourceUser_basic(t *testing.T) {
 	t.Parallel()
-	t.Skip("Users cannot be deleted and there are limited licenses, skipping")
+	t.Skip("Users cannot be deleted and there are limited licenses, skipping, comment out this line to run locally")
 
 	email := os.Getenv("SALESFORCE_USERNAME")
 	parts := strings.Split(email, "@")
-	username := fmt.Sprintf("%s+%s@%s", parts[0], acctest.RandString(10), parts[1])
+	var username string
+	if !strings.Contains(parts[0], "+") {
+		username = fmt.Sprintf("%s+%s@%s", parts[0], acctest.RandString(10), parts[1])
+	} else {
+		username = fmt.Sprintf("%s-%s@%s", parts[0], acctest.RandString(10), parts[1])
+	}
 
 	resource.Test(t, resource.TestCase{
 		PreCheck:                 func() { testAccPreCheck(t) },
@@ -44,11 +49,6 @@ resource "salesforce_user" "test" {
   last_name = "test"
   username = "%s"
   profile_id = data.salesforce_profile.chatter_free.id
-  email_encoding_key = "ISO-8859-1"
-  is_active = true
-  language_locale_key = "en_US"
-  locale_sid_key = "en_US"
-  time_zone_sid_key = "America/Los_Angeles"
 }
 `, email, username)
 }
