@@ -2,7 +2,6 @@ package provider
 
 import (
 	"context"
-	"strings"
 
 	"github.com/hashicorp/terraform-plugin-framework/attr"
 	"github.com/hashicorp/terraform-plugin-framework/diag"
@@ -150,8 +149,8 @@ type userResource struct {
 	client *force.ForceApi
 }
 
-type User struct {
-	ID                types.String `tfsdk:"id" force:"-"`
+type user struct {
+	Id                types.String `tfsdk:"id" force:"-"`
 	IsActive          *bool        `tfsdk:"-" force:",omitempty"`
 	Alias             string       `tfsdk:"alias" force:",omitempty"`
 	Email             string       `tfsdk:"email" force:",omitempty"`
@@ -164,41 +163,41 @@ type User struct {
 	Username          string       `tfsdk:"username" force:",omitempty"`
 }
 
-func (User) ApiName() string {
+func (user) ApiName() string {
 	return "User"
 }
 
-func (User) ExternalIdApiName() string {
+func (user) ExternalIdApiName() string {
 	return ""
 }
 
 func (u userResource) Create(ctx context.Context, req tfsdk.CreateResourceRequest, resp *tfsdk.CreateResourceResponse) {
-	var user User
-	if diags := req.Plan.Get(ctx, &user); diags.HasError() {
+	var usr user
+	if diags := req.Plan.Get(ctx, &usr); diags.HasError() {
 		resp.Diagnostics = diags
 		return
 	}
 
-	sfResp, err := u.client.InsertSObject(user)
+	sfResp, err := u.client.InsertSObject(usr)
 	if err != nil {
 		resp.AddError("Error inserting User", err.Error())
 		return
 	}
-	user.ID = types.String{Value: sfResp.Id}
+	usr.Id = types.String{Value: sfResp.Id}
 
-	resp.Diagnostics = resp.State.Set(ctx, &user)
+	resp.Diagnostics = resp.State.Set(ctx, &usr)
 }
 
 func (u userResource) Read(ctx context.Context, req tfsdk.ReadResourceRequest, resp *tfsdk.ReadResourceResponse) {
-	var user User
-	if diags := req.State.Get(ctx, &user); diags.HasError() {
+	var usr user
+	if diags := req.State.Get(ctx, &usr); diags.HasError() {
 		resp.Diagnostics = diags
 		return
 	}
 
-	err := u.client.GetSObject(user.ID.Value, nil, &user)
+	err := u.client.GetSObject(usr.Id.Value, nil, &usr)
 	if err != nil {
-		if strings.Contains(err.Error(), "NOT_FOUND") {
+		if isErrorNotFound(err) {
 			resp.State.RemoveResource(ctx)
 		} else {
 			resp.AddError("Error getting User", err.Error())
@@ -206,22 +205,22 @@ func (u userResource) Read(ctx context.Context, req tfsdk.ReadResourceRequest, r
 		return
 	}
 
-	resp.Diagnostics = resp.State.Set(ctx, &user)
+	resp.Diagnostics = resp.State.Set(ctx, &usr)
 }
 
 func (u userResource) Update(ctx context.Context, req tfsdk.UpdateResourceRequest, resp *tfsdk.UpdateResourceResponse) {
-	var user User
-	if diags := req.Plan.Get(ctx, &user); diags.HasError() {
+	var usr user
+	if diags := req.Plan.Get(ctx, &usr); diags.HasError() {
 		resp.Diagnostics = diags
 		return
 	}
 
-	if err := u.client.UpdateSObject(user.ID.Value, user); err != nil {
+	if err := u.client.UpdateSObject(usr.Id.Value, usr); err != nil {
 		resp.AddError("Error updating User", err.Error())
 		return
 	}
 
-	resp.Diagnostics = resp.State.Set(ctx, &user)
+	resp.Diagnostics = resp.State.Set(ctx, &usr)
 }
 
 func (u userResource) Delete(ctx context.Context, req tfsdk.DeleteResourceRequest, resp *tfsdk.DeleteResourceResponse) {
@@ -232,9 +231,9 @@ func (u userResource) Delete(ctx context.Context, req tfsdk.DeleteResourceReques
 	}
 
 	isActive := false
-	err := u.client.UpdateSObject(id.(types.String).Value, User{IsActive: &isActive})
+	err := u.client.UpdateSObject(id.(types.String).Value, user{IsActive: &isActive})
 	if err != nil {
-		if strings.Contains(err.Error(), "NOT_FOUND") {
+		if isErrorNotFound(err) {
 			resp.State.RemoveResource(ctx)
 		} else {
 			resp.AddError("Error deleting User", err.Error())

@@ -42,15 +42,13 @@ type profileDataSource struct {
 }
 
 type profileData struct {
-	ID   types.String `tfsdk:"id"`
-	Name string       `tfsdk:"name"`
+	Id   *string `tfsdk:"id"`
+	Name string  `tfsdk:"name"`
 }
 
-type ProfileQueryResponse struct {
+type profileQueryResponse struct {
 	sobjects.BaseQuery
-	Records []struct {
-		sobjects.BaseSObject
-	} `json:"Records" force:"records"`
+	Records []profileData
 }
 
 func (p profileDataSource) Read(ctx context.Context, req tfsdk.ReadDataSourceRequest, resp *tfsdk.ReadDataSourceResponse) {
@@ -60,16 +58,17 @@ func (p profileDataSource) Read(ctx context.Context, req tfsdk.ReadDataSourceReq
 		return
 	}
 
-	var query ProfileQueryResponse
+	var query profileQueryResponse
 	nameFilter := fmt.Sprintf("Name = '%s'", pData.Name)
 	if err := p.client.Query(force.BuildQuery("Id, Name", "Profile", []string{nameFilter}), &query); err != nil {
-		resp.Diagnostics.AddError("Error getting profile", err.Error())
+		resp.Diagnostics.AddError("Error getting Profile", err.Error())
 		return
 	}
-	profile := query.Records[0]
-	pData.ID = types.String{Value: profile.Id}
-
-	if diags := resp.State.Set(ctx, &pData); diags.HasError() {
-		resp.Diagnostics = diags
+	if len(query.Records) == 0 {
+		resp.Diagnostics.AddError("Error getting Profile", fmt.Sprintf("No Profile where %s", nameFilter))
+		return
 	}
+
+	pData = query.Records[0]
+	resp.Diagnostics = resp.State.Set(ctx, &pData)
 }

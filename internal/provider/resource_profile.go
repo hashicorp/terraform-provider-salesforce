@@ -25,11 +25,14 @@ func (profileType) GetSchema(_ context.Context) (tfsdk.Schema, diag.Diagnostics)
 			},
 			"description": {
 				Type:     types.StringType,
-				Required: true,
+				Optional: true,
 			},
 			"user_license_id": {
 				Type:     types.StringType,
 				Required: true,
+				PlanModifiers: tfsdk.AttributePlanModifiers{
+					tfsdk.RequiresReplace(),
+				},
 			},
 		},
 	}, nil
@@ -43,19 +46,27 @@ func (p profileType) NewResource(_ context.Context, prov tfsdk.Provider) (tfsdk.
 	return profileResource{client: provider.client}, nil
 }
 
-type Profile struct {
-	ID            types.String `tfsdk:"id" force:"-"`
+type profile struct {
+	Id            types.String `tfsdk:"id" force:"-"`
 	Name          string       `tfsdk:"name" force:",omitempty"`
-	Description   string       `tfsdk:"description" force:",omitempty"`
+	Description   *string      `tfsdk:"description" force:",omitempty"`
 	UserLicenseId string       `tfsdk:"user_license_id" force:",omitempty"`
 }
 
-func (Profile) ApiName() string {
+func (profile) ApiName() string {
 	return "Profile"
 }
 
-func (Profile) ExternalIdApiName() string {
+func (profile) ExternalIdApiName() string {
 	return ""
+}
+
+// Zero out fields that can't be updated.
+// Salesforce doesn't compare with the existing data, it rejects the request if
+// the field is present. Ensure the fields have the omitempty tag for this to work.
+func (p profile) updatable() profile {
+	p.UserLicenseId = ""
+	return p
 }
 
 type profileResource struct {
@@ -63,27 +74,72 @@ type profileResource struct {
 }
 
 func (p profileResource) Create(ctx context.Context, req tfsdk.CreateResourceRequest, resp *tfsdk.CreateResourceResponse) {
-	var profile Profile
-	if diags := req.Plan.Get(ctx, &profile); diags.HasError() {
+	var prof profile
+	if diags := req.Plan.Get(ctx, &prof); diags.HasError() {
 		resp.Diagnostics = diags
 		return
 	}
 
-	sfResp, err := p.client.InsertSObject(profile)
+	sfResp, err := p.client.InsertSObject(prof)
 	if err != nil {
 		resp.AddError("Error inserting Profile", err.Error())
 		return
 	}
-	profile.ID = types.String{Value: sfResp.Id}
+	prof.Id = types.String{Value: sfResp.Id}
 
-	resp.Diagnostics = resp.State.Set(ctx, &profile)
+	resp.Diagnostics = resp.State.Set(ctx, &prof)
 }
 
 func (p profileResource) Read(ctx context.Context, req tfsdk.ReadResourceRequest, resp *tfsdk.ReadResourceResponse) {
+	var prof profile
+	if diags := req.State.Get(ctx, &prof); diags.HasError() {
+		resp.Diagnostics = diags
+		return
+	}
+
+	err := p.client.GetSObject(prof.Id.Value, nil, &prof)
+	if err != nil {
+		if isErrorNotFound(err) {
+			resp.State.RemoveResource(ctx)
+		} else {
+			resp.AddError("Error getting Profile", err.Error())
+		}
+		return
+	}
+
+	resp.Diagnostics = resp.State.Set(ctx, &prof)
 }
 
 func (p profileResource) Update(ctx context.Context, req tfsdk.UpdateResourceRequest, resp *tfsdk.UpdateResourceResponse) {
+	var prof profile
+	if diags := req.Plan.Get(ctx, &prof); diags.HasError() {
+		resp.Diagnostics = diags
+		return
+	}
+
+	err := p.client.UpdateSObject(prof.Id.Value, prof.updatable())
+	if err != nil {
+		resp.AddError("Error updating Profile", err.Error())
+		return
+	}
+
+	resp.Diagnostics = resp.State.Set(ctx, &prof)
 }
 
 func (p profileResource) Delete(ctx context.Context, req tfsdk.DeleteResourceRequest, resp *tfsdk.DeleteResourceResponse) {
+	var prof profile
+	if diags := req.State.Get(ctx, &prof); diags.HasError() {
+		resp.Diagnostics = diags
+		return
+	}
+
+	err := p.client.DeleteSObject(prof.Id.Value, prof)
+	if err != nil {
+		if !isErrorNotFound(err) {
+			resp.AddError("Error deleting Profile", err.Error())
+			return
+		}
+	}
+
+	resp.State.RemoveResource(ctx)
 }
