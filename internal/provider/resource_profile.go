@@ -22,6 +22,9 @@ func (profileType) GetSchema(_ context.Context) (tfsdk.Schema, diag.Diagnostics)
 			"name": {
 				Type:     types.StringType,
 				Required: true,
+				Validators: []tfsdk.AttributeValidator{
+					email{},
+				},
 			},
 			"description": {
 				Type:     types.StringType,
@@ -30,6 +33,9 @@ func (profileType) GetSchema(_ context.Context) (tfsdk.Schema, diag.Diagnostics)
 			"user_license_id": {
 				Type:     types.StringType,
 				Required: true,
+				Validators: []tfsdk.AttributeValidator{
+					email{},
+				},
 				PlanModifiers: tfsdk.AttributePlanModifiers{
 					tfsdk.RequiresReplace(),
 				},
