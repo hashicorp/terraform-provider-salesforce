@@ -142,16 +142,13 @@ func (u userType) NewResource(_ context.Context, p tfsdk.Provider) (tfsdk.Resour
 	if !ok {
 		return nil, diag.Diagnostics{errorConvertingProvider(u)}
 	}
-	return userResource{client: prov.client}, nil
+	user := &userResource{}
+	user.Client = prov.client
+	user.SObject = user
+	return user, nil
 }
 
 type userResource struct {
-	client *force.ForceApi
-}
-
-type user struct {
-	Id                types.String `tfsdk:"id" force:"-"`
-	IsActive          *bool        `tfsdk:"-" force:",omitempty"`
 	Alias             string       `tfsdk:"alias" force:",omitempty"`
 	Email             string       `tfsdk:"email" force:",omitempty"`
 	EmailEncodingKey  string       `tfsdk:"email_encoding_key" force:",omitempty"`
@@ -161,66 +158,17 @@ type user struct {
 	ProfileID         string       `tfsdk:"profile_id" force:",omitempty"`
 	TimeZoneSidKey    string       `tfsdk:"time_zone_sid_key" force:",omitempty"`
 	Username          string       `tfsdk:"username" force:",omitempty"`
+	IsActive          *bool        `tfsdk:"-" force:",omitempty"`
+	Id                types.String `tfsdk:"id" force:"-"`
+	Resource          `tfsdk:"-"`
 }
 
-func (user) ApiName() string {
+func (userResource) ApiName() string {
 	return "User"
 }
 
-func (user) ExternalIdApiName() string {
+func (userResource) ExternalIdApiName() string {
 	return ""
-}
-
-func (u userResource) Create(ctx context.Context, req tfsdk.CreateResourceRequest, resp *tfsdk.CreateResourceResponse) {
-	var usr user
-	if diags := req.Plan.Get(ctx, &usr); diags.HasError() {
-		resp.Diagnostics = diags
-		return
-	}
-
-	sfResp, err := u.client.InsertSObject(usr)
-	if err != nil {
-		resp.AddError("Error inserting User", err.Error())
-		return
-	}
-	usr.Id = types.String{Value: sfResp.Id}
-
-	resp.Diagnostics = resp.State.Set(ctx, &usr)
-}
-
-func (u userResource) Read(ctx context.Context, req tfsdk.ReadResourceRequest, resp *tfsdk.ReadResourceResponse) {
-	var usr user
-	if diags := req.State.Get(ctx, &usr); diags.HasError() {
-		resp.Diagnostics = diags
-		return
-	}
-
-	err := u.client.GetSObject(usr.Id.Value, nil, &usr)
-	if err != nil {
-		if isErrorNotFound(err) {
-			resp.State.RemoveResource(ctx)
-		} else {
-			resp.AddError("Error getting User", err.Error())
-		}
-		return
-	}
-
-	resp.Diagnostics = resp.State.Set(ctx, &usr)
-}
-
-func (u userResource) Update(ctx context.Context, req tfsdk.UpdateResourceRequest, resp *tfsdk.UpdateResourceResponse) {
-	var usr user
-	if diags := req.Plan.Get(ctx, &usr); diags.HasError() {
-		resp.Diagnostics = diags
-		return
-	}
-
-	if err := u.client.UpdateSObject(usr.Id.Value, usr); err != nil {
-		resp.AddError("Error updating User", err.Error())
-		return
-	}
-
-	resp.Diagnostics = resp.State.Set(ctx, &usr)
 }
 
 func (u userResource) Delete(ctx context.Context, req tfsdk.DeleteResourceRequest, resp *tfsdk.DeleteResourceResponse) {
@@ -231,7 +179,7 @@ func (u userResource) Delete(ctx context.Context, req tfsdk.DeleteResourceReques
 	}
 
 	isActive := false
-	err := u.client.UpdateSObject(id.(types.String).Value, user{IsActive: &isActive})
+	err := u.Client.UpdateSObject(id.(types.String).Value, userResource{IsActive: &isActive})
 	if err != nil {
 		if isErrorNotFound(err) {
 			resp.State.RemoveResource(ctx)
@@ -243,4 +191,20 @@ func (u userResource) Delete(ctx context.Context, req tfsdk.DeleteResourceReques
 
 	resp.State.RemoveResource(ctx)
 	resp.AddWarning("Users cannot be deleted from salesforce", "Destroy has deactivated the user and discarded it from Terraform state, but the record continues to exist, and the unique username remains taken")
+}
+
+func (u *userResource) Instance() force.SObject {
+	return u
+}
+
+func (u *userResource) Updatable() force.SObject {
+	return *u
+}
+
+func (u *userResource) GetId() string {
+	return u.Id.Value
+}
+
+func (u *userResource) SetId(id string) {
+	u.Id = types.String{Value: id}
 }

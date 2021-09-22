@@ -36,6 +36,9 @@ func (userRoleType) GetSchema(_ context.Context) (tfsdk.Schema, diag.Diagnostics
 			"parent_role_id": {
 				Type:     types.StringType,
 				Optional: true,
+				PlanModifiers: tfsdk.AttributePlanModifiers{
+					NormalizeId{},
+				},
 			},
 		},
 	}, nil
