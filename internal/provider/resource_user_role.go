@@ -46,95 +46,40 @@ func (u userRoleType) NewResource(_ context.Context, prov tfsdk.Provider) (tfsdk
 	if !ok {
 		return nil, diag.Diagnostics{errorConvertingProvider(u)}
 	}
-	return userRoleResource{client: provider.client}, nil
-}
-
-type userRole struct {
-	Id            types.String `tfsdk:"id" force:"-"`
-	Name          string       `tfsdk:"name" force:",omitempty"`
-	DeveloperName string       `tfsdk:"developer_name" force:",omitempty"`
-	ParentRoleId  *string      `tfsdk:"parent_role_id" force:",omitempty"`
-}
-
-func (userRole) ApiName() string {
-	return "UserRole"
-}
-
-func (userRole) ExternalIdApiName() string {
-	return ""
+	r := &userRoleResource{}
+	r.Client = provider.client
+	r.SObject = r
+	return r, nil
 }
 
 type userRoleResource struct {
-	client *force.ForceApi
+	Name          string       `tfsdk:"name" force:",omitempty"`
+	DeveloperName string       `tfsdk:"developer_name" force:",omitempty"`
+	ParentRoleId  *string      `tfsdk:"parent_role_id" force:",omitempty"`
+	Id            types.String `tfsdk:"id" force:"-"`
+	Resource      `tfsdk:"-"`
 }
 
-func (u userRoleResource) Create(ctx context.Context, req tfsdk.CreateResourceRequest, resp *tfsdk.CreateResourceResponse) {
-	var role userRole
-	if diags := req.Plan.Get(ctx, &role); diags.HasError() {
-		resp.Diagnostics = diags
-		return
-	}
-
-	sfResp, err := u.client.InsertSObject(role)
-	if err != nil {
-		resp.AddError("Error inserting UserRole", err.Error())
-		return
-	}
-	role.Id = types.String{Value: sfResp.Id}
-
-	resp.Diagnostics = resp.State.Set(ctx, &role)
+func (userRoleResource) ApiName() string {
+	return "UserRole"
 }
 
-func (u userRoleResource) Read(ctx context.Context, req tfsdk.ReadResourceRequest, resp *tfsdk.ReadResourceResponse) {
-	var role userRole
-	if diags := req.State.Get(ctx, &role); diags.HasError() {
-		resp.Diagnostics = diags
-		return
-	}
-
-	err := u.client.GetSObject(role.Id.Value, nil, &role)
-	if err != nil {
-		if isErrorNotFound(err) {
-			resp.State.RemoveResource(ctx)
-		} else {
-			resp.AddError("Error getting UserRole", err.Error())
-		}
-		return
-	}
-
-	resp.Diagnostics = resp.State.Set(ctx, &role)
+func (userRoleResource) ExternalIdApiName() string {
+	return ""
 }
 
-func (u userRoleResource) Update(ctx context.Context, req tfsdk.UpdateResourceRequest, resp *tfsdk.UpdateResourceResponse) {
-	var role userRole
-	if diags := req.Plan.Get(ctx, &role); diags.HasError() {
-		resp.Diagnostics = diags
-		return
-	}
-
-	err := u.client.UpdateSObject(role.Id.Value, role)
-	if err != nil {
-		resp.AddError("Error updating UserRole", err.Error())
-		return
-	}
-
-	resp.Diagnostics = resp.State.Set(ctx, &role)
+func (u *userRoleResource) Instance() force.SObject {
+	return u
 }
 
-func (u userRoleResource) Delete(ctx context.Context, req tfsdk.DeleteResourceRequest, resp *tfsdk.DeleteResourceResponse) {
-	var role userRole
-	if diags := req.State.Get(ctx, &role); diags.HasError() {
-		resp.Diagnostics = diags
-		return
-	}
+func (u *userRoleResource) Updatable() force.SObject {
+	return *u
+}
 
-	err := u.client.DeleteSObject(role.Id.Value, role)
-	if err != nil {
-		if !isErrorNotFound(err) {
-			resp.AddError("Error deleting UserRole", err.Error())
-			return
-		}
-	}
+func (u *userRoleResource) GetId() string {
+	return u.Id.Value
+}
 
-	resp.State.RemoveResource(ctx)
+func (u *userRoleResource) SetId(id string) {
+	u.Id = types.String{Value: id}
 }
