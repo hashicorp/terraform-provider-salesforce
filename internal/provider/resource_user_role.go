@@ -49,40 +49,45 @@ func (u userRoleType) NewResource(_ context.Context, prov tfsdk.Provider) (tfsdk
 	if !ok {
 		return nil, diag.Diagnostics{errorConvertingProvider(u)}
 	}
-	r := &userRoleResource{}
-	r.Client = provider.client
-	r.SObject = r
-	return r, nil
+	return &userRoleResource{
+		Resource: Resource{
+			Client: provider.client,
+			Data:   &userResourceData{},
+		},
+	}, nil
 }
 
 type userRoleResource struct {
+	Resource
+}
+
+type userRoleResourceData struct {
 	Name          string       `tfsdk:"name" force:",omitempty"`
 	DeveloperName string       `tfsdk:"developer_name" force:",omitempty"`
 	ParentRoleId  *string      `tfsdk:"parent_role_id" force:",omitempty"`
 	Id            types.String `tfsdk:"id" force:"-"`
-	Resource      `tfsdk:"-"`
 }
 
-func (userRoleResource) ApiName() string {
+func (userRoleResourceData) ApiName() string {
 	return "UserRole"
 }
 
-func (userRoleResource) ExternalIdApiName() string {
+func (userRoleResourceData) ExternalIdApiName() string {
 	return ""
 }
 
-func (u *userRoleResource) Instance() force.SObject {
+func (u *userRoleResourceData) Instance() force.SObject {
 	return u
 }
 
-func (u *userRoleResource) Updatable() force.SObject {
+func (u *userRoleResourceData) Updatable() force.SObject {
 	return *u
 }
 
-func (u *userRoleResource) GetId() string {
+func (u *userRoleResourceData) GetId() string {
 	return u.Id.Value
 }
 
-func (u *userRoleResource) SetId(id string) {
+func (u *userRoleResourceData) SetId(id string) {
 	u.Id = types.String{Value: id}
 }

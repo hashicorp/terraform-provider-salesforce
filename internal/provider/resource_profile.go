@@ -50,42 +50,47 @@ func (p profileType) NewResource(_ context.Context, prov tfsdk.Provider) (tfsdk.
 	if !ok {
 		return nil, diag.Diagnostics{errorConvertingProvider(p)}
 	}
-	prof := &profileResource{}
-	prof.Client = provider.client
-	prof.SObject = prof
-	return prof, nil
+	return &profileResource{
+		Resource: Resource{
+			Client: provider.client,
+			Data:   &profileResourceData{},
+		},
+	}, nil
 }
 
 type profileResource struct {
+	Resource
+}
+
+type profileResourceData struct {
 	Name          string       `tfsdk:"name" force:",omitempty"`
 	Description   *string      `tfsdk:"description" force:",omitempty"`
 	UserLicenseId string       `tfsdk:"user_license_id" force:",omitempty"`
 	Id            types.String `tfsdk:"id" force:"-"`
-	Resource      `tfsdk:"-"`
 }
 
-func (profileResource) ApiName() string {
+func (profileResourceData) ApiName() string {
 	return "Profile"
 }
 
-func (profileResource) ExternalIdApiName() string {
+func (profileResourceData) ExternalIdApiName() string {
 	return ""
 }
 
-func (p *profileResource) Instance() force.SObject {
+func (p *profileResourceData) Instance() force.SObject {
 	return p
 }
 
-func (p *profileResource) Updatable() force.SObject {
-	sobject := *p
-	sobject.UserLicenseId = ""
-	return sobject
+func (p *profileResourceData) Updatable() force.SObject {
+	updatable := *p
+	updatable.UserLicenseId = ""
+	return updatable
 }
 
-func (p *profileResource) GetId() string {
+func (p *profileResourceData) GetId() string {
 	return p.Id.Value
 }
 
-func (p *profileResource) SetId(id string) {
+func (p *profileResourceData) SetId(id string) {
 	p.Id = types.String{Value: id}
 }

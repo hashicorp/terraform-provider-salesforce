@@ -142,36 +142,19 @@ func (u userType) NewResource(_ context.Context, p tfsdk.Provider) (tfsdk.Resour
 	if !ok {
 		return nil, diag.Diagnostics{errorConvertingProvider(u)}
 	}
-	user := &userResource{}
-	user.Client = prov.client
-	user.SObject = user
-	return user, nil
+	return &userResource{
+		Resource: Resource{
+			Client: prov.client,
+			Data:   &userResourceData{},
+		},
+	}, nil
 }
 
 type userResource struct {
-	Alias             string       `tfsdk:"alias" force:",omitempty"`
-	Email             string       `tfsdk:"email" force:",omitempty"`
-	EmailEncodingKey  string       `tfsdk:"email_encoding_key" force:",omitempty"`
-	LanguageLocaleKey string       `tfsdk:"language_locale_key" force:",omitempty"`
-	LastName          string       `tfsdk:"last_name" force:",omitempty"`
-	LocaleSidKey      string       `tfsdk:"locale_sid_key" force:",omitempty"`
-	ProfileID         string       `tfsdk:"profile_id" force:",omitempty"`
-	TimeZoneSidKey    string       `tfsdk:"time_zone_sid_key" force:",omitempty"`
-	Username          string       `tfsdk:"username" force:",omitempty"`
-	IsActive          *bool        `tfsdk:"-" force:",omitempty"`
-	Id                types.String `tfsdk:"id" force:"-"`
-	Resource          `tfsdk:"-"`
+	Resource
 }
 
-func (userResource) ApiName() string {
-	return "User"
-}
-
-func (userResource) ExternalIdApiName() string {
-	return ""
-}
-
-func (u userResource) Delete(ctx context.Context, req tfsdk.DeleteResourceRequest, resp *tfsdk.DeleteResourceResponse) {
+func (u *userResource) Delete(ctx context.Context, req tfsdk.DeleteResourceRequest, resp *tfsdk.DeleteResourceResponse) {
 	id, diags := req.State.GetAttribute(ctx, tftypes.NewAttributePath().WithAttributeName("id"))
 	if diags.HasError() {
 		resp.Diagnostics = diags
@@ -179,7 +162,7 @@ func (u userResource) Delete(ctx context.Context, req tfsdk.DeleteResourceReques
 	}
 
 	isActive := false
-	err := u.Client.UpdateSObject(id.(types.String).Value, userResource{IsActive: &isActive})
+	err := u.Client.UpdateSObject(id.(types.String).Value, userResourceData{IsActive: &isActive})
 	if err != nil {
 		if isErrorNotFound(err) {
 			resp.State.RemoveResource(ctx)
@@ -193,18 +176,40 @@ func (u userResource) Delete(ctx context.Context, req tfsdk.DeleteResourceReques
 	resp.AddWarning("Users cannot be deleted from salesforce", "Destroy has deactivated the user and discarded it from Terraform state, but the record continues to exist, and the unique username remains taken")
 }
 
-func (u *userResource) Instance() force.SObject {
+type userResourceData struct {
+	Alias             string       `tfsdk:"alias" force:",omitempty"`
+	Email             string       `tfsdk:"email" force:",omitempty"`
+	EmailEncodingKey  string       `tfsdk:"email_encoding_key" force:",omitempty"`
+	LanguageLocaleKey string       `tfsdk:"language_locale_key" force:",omitempty"`
+	LastName          string       `tfsdk:"last_name" force:",omitempty"`
+	LocaleSidKey      string       `tfsdk:"locale_sid_key" force:",omitempty"`
+	ProfileID         string       `tfsdk:"profile_id" force:",omitempty"`
+	TimeZoneSidKey    string       `tfsdk:"time_zone_sid_key" force:",omitempty"`
+	Username          string       `tfsdk:"username" force:",omitempty"`
+	IsActive          *bool        `tfsdk:"-" force:",omitempty"`
+	Id                types.String `tfsdk:"id" force:"-"`
+}
+
+func (userResourceData) ApiName() string {
+	return "User"
+}
+
+func (userResourceData) ExternalIdApiName() string {
+	return ""
+}
+
+func (u *userResourceData) Instance() force.SObject {
 	return u
 }
 
-func (u *userResource) Updatable() force.SObject {
+func (u *userResourceData) Updatable() force.SObject {
 	return *u
 }
 
-func (u *userResource) GetId() string {
+func (u *userResourceData) GetId() string {
 	return u.Id.Value
 }
 
-func (u *userResource) SetId(id string) {
+func (u *userResourceData) SetId(id string) {
 	u.Id = types.String{Value: id}
 }
