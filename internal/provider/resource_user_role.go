@@ -52,7 +52,7 @@ func (u userRoleType) NewResource(_ context.Context, prov tfsdk.Provider) (tfsdk
 	return &userRoleResource{
 		Resource: Resource{
 			Client: provider.client,
-			Data:   &userResourceData{},
+			Data:   &userRoleResourceData{},
 		},
 	}, nil
 }
