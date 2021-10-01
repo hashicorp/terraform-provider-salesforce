@@ -58,6 +58,12 @@ func (r *Resource) Read(ctx context.Context, req tfsdk.ReadResourceRequest, resp
 }
 
 func (r *Resource) Update(ctx context.Context, req tfsdk.UpdateResourceRequest, resp *tfsdk.UpdateResourceResponse) {
+	// id, diags := req.State.GetAttribute(ctx, tftypes.NewAttributePath().WithAttributeName("id"))
+	// if diags.HasError() {
+	// 	resp.Diagnostics = diags
+	// 	return
+	// }
+	// idStr := id.(types.String).Value
 	sobject := r.Data.Instance()
 	if diags := req.Plan.Get(ctx, sobject); diags.HasError() {
 		resp.Diagnostics = diags
@@ -69,6 +75,7 @@ func (r *Resource) Update(ctx context.Context, req tfsdk.UpdateResourceRequest, 
 		resp.AddError(fmt.Sprintf("Error updating %s", sobject.ApiName()), err.Error())
 		return
 	}
+	//r.Data.SetId(idStr)
 
 	resp.Diagnostics = resp.State.Set(ctx, sobject)
 }

@@ -18,6 +18,9 @@ func (profileType) GetSchema(_ context.Context) (tfsdk.Schema, diag.Diagnostics)
 			"id": {
 				Type:     types.StringType,
 				Computed: true,
+				PlanModifiers: tfsdk.AttributePlanModifiers{
+					staticComputed{},
+				},
 			},
 			"name": {
 				Type:     types.StringType,

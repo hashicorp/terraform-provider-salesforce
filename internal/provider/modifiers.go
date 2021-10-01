@@ -66,3 +66,14 @@ func (r resourceDefaults) Modify(_ context.Context, req tfsdk.ModifyAttributePla
 		}
 	}
 }
+
+type staticComputed struct {
+	emptyDescriptions
+}
+
+func (staticComputed) Modify(_ context.Context, req tfsdk.ModifyAttributePlanRequest, resp *tfsdk.ModifyAttributePlanResponse) {
+	if req.AttributeState == nil {
+		return
+	}
+	resp.AttributePlan = req.AttributeState
+}
