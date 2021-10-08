@@ -39,11 +39,7 @@ func (r *Resource) Create(ctx context.Context, req tfsdk.CreateResourceRequest, 
 	if r.NeedsGetAfterUpsert {
 		err := r.Client.GetSObject(r.Data.GetId(), nil, sobject)
 		if err != nil {
-			if isErrorNotFound(err) {
-				resp.State.RemoveResource(ctx)
-			} else {
-				resp.Diagnostics.AddError(fmt.Sprintf("Error Getting %s", sobject.ApiName()), err.Error())
-			}
+			resp.Diagnostics.AddError(fmt.Sprintf("Error Getting %s", sobject.ApiName()), err.Error())
 			return
 		}
 	}
@@ -118,5 +114,14 @@ func (r *Resource) Delete(ctx context.Context, req tfsdk.DeleteResourceRequest, 
 }
 
 func (r *Resource) ImportState(ctx context.Context, req tfsdk.ImportResourceStateRequest, resp *tfsdk.ImportResourceStateResponse) {
-	tfsdk.ResourceImportStateNotImplemented(ctx, "", resp)
+	sobject := r.Data.Instance()
+	id := normalizeId(req.ID)
+	err := r.Client.GetSObject(id, nil, sobject)
+	if err != nil {
+		resp.Diagnostics.AddError(fmt.Sprintf("Error Getting %s", sobject.ApiName()), err.Error())
+		return
+	}
+	r.Data.SetId(id)
+
+	resp.Diagnostics = resp.State.Set(ctx, sobject)
 }
