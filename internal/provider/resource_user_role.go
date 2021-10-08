@@ -83,6 +83,10 @@ func (u *userRoleResourceData) Instance() force.SObject {
 	return u
 }
 
+func (u *userRoleResourceData) Insertable() force.SObject {
+	return *u
+}
+
 func (u *userRoleResourceData) Updatable() force.SObject {
 	return *u
 }

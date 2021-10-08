@@ -115,7 +115,7 @@ func (p *provider) Configure(ctx context.Context, req tfsdk.ConfigureProviderReq
 		PrivateKey: config.PrivateKey.Value,
 	})
 	if err != nil {
-		resp.AddError("Error creating salesforce client", err.Error())
+		resp.Diagnostics.AddError("Error creating salesforce client", err.Error())
 		return
 	}
 	p.client = client
@@ -141,7 +141,7 @@ func errorConvertingProvider(typ interface{}) diag.ErrorDiagnostic {
 }
 
 func addAttributeMustBeSetError(resp *tfsdk.ConfigureProviderResponse, attr string) {
-	resp.AddAttributeError(
+	resp.Diagnostics.AddAttributeError(
 		tftypes.NewAttributePath().WithAttributeName(attr),
 		"Invalid provider config",
 		fmt.Sprintf("%s must be set.", attr),
@@ -149,7 +149,7 @@ func addAttributeMustBeSetError(resp *tfsdk.ConfigureProviderResponse, attr stri
 }
 
 func addCannotInterpolateInProviderBlockError(resp *tfsdk.ConfigureProviderResponse, attr string) {
-	resp.AddAttributeError(
+	resp.Diagnostics.AddAttributeError(
 		tftypes.NewAttributePath().WithAttributeName(attr),
 		"Can't interpolate into provider block",
 		"Interpolating that value into the provider block doesn't give the provider enough information to run. Try hard-coding the value, instead.",

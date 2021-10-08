@@ -2,6 +2,8 @@ module github.com/hashicorp/terraform-provider-salesforce
 
 go 1.16
 
+replace github.com/hashicorp/terraform-plugin-framework => github.com/appilon/terraform-plugin-framework v0.4.3-0.20211007214049-95d9194c4149
+
 require (
 	github.com/dgrijalva/jwt-go v3.2.0+incompatible
 	github.com/hashicorp/go-multierror v1.1.0 // indirect

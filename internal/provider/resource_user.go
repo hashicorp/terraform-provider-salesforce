@@ -177,13 +177,13 @@ func (u *userResource) Delete(ctx context.Context, req tfsdk.DeleteResourceReque
 		if isErrorNotFound(err) {
 			resp.State.RemoveResource(ctx)
 		} else {
-			resp.AddError("Error deleting User", err.Error())
+			resp.Diagnostics.AddError("Error deleting User", err.Error())
 		}
 		return
 	}
 
 	resp.State.RemoveResource(ctx)
-	resp.AddWarning("Users cannot be deleted from salesforce", "Destroy has deactivated the user and discarded it from Terraform state, but the record continues to exist, and the unique username remains taken")
+	resp.Diagnostics.AddWarning("Users cannot be deleted from salesforce", "Destroy has deactivated the user and discarded it from Terraform state, but the record continues to exist, and the unique username remains taken")
 }
 
 type userResourceData struct {
@@ -196,7 +196,7 @@ type userResourceData struct {
 	ProfileID         string       `tfsdk:"profile_id" force:",omitempty"`
 	TimeZoneSidKey    string       `tfsdk:"time_zone_sid_key" force:",omitempty"`
 	Username          string       `tfsdk:"username" force:",omitempty"`
-	UserRoleId        string       `tfsdk:"user_role_id" force:",omitempty"`
+	UserRoleId        *string      `tfsdk:"user_role_id" force:",omitempty"`
 	IsActive          *bool        `tfsdk:"-" force:",omitempty"`
 	Id                types.String `tfsdk:"id" force:"-"`
 }
@@ -211,6 +211,10 @@ func (userResourceData) ExternalIdApiName() string {
 
 func (u *userResourceData) Instance() force.SObject {
 	return u
+}
+
+func (u *userResourceData) Insertable() force.SObject {
+	return *u
 }
 
 func (u *userResourceData) Updatable() force.SObject {
