@@ -47,6 +47,7 @@ resource "salesforce_user" "example" {
 - **language_locale_key** (String)
 - **locale_sid_key** (String)
 - **time_zone_sid_key** (String)
+- **user_role_id** (String)
 
 ### Read-Only
 
