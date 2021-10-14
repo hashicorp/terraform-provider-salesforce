@@ -59,7 +59,7 @@ func (r resourceDefaults) Modify(_ context.Context, req tfsdk.ModifyAttributePla
 	resp.AttributePlan = req.AttributePlan
 	// TODO need to check if null, not supported generically for attr.Value
 	// for now all defaults happen to be string so this is fine for now
-	if req.AttributePlan.(types.String).Null {
+	if req.AttributeConfig.(types.String).Null {
 		def, ok := r.defaults[req.AttributePath.String()]
 		if ok {
 			resp.AttributePlan = def
