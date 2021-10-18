@@ -24,12 +24,12 @@ func (BoolMarshalerType) ValueFromTerraform(ctx context.Context, val tftypes.Val
 	return BoolMarshaler{inner.(types.Bool)}, nil
 }
 
-func (b BoolMarshalerType) Equal(other attr.Type) bool {
+func (BoolMarshalerType) Equal(other attr.Type) bool {
 	_, ok := other.(BoolMarshalerType)
 	return ok
 }
 
-func (b BoolMarshalerType) String() string {
+func (BoolMarshalerType) String() string {
 	return "BoolMarshalerType"
 }
 
@@ -41,7 +41,7 @@ type BoolMarshaler struct {
 	types.Bool
 }
 
-func (b BoolMarshaler) Type(context.Context) attr.Type {
+func (BoolMarshaler) Type(context.Context) attr.Type {
 	return BoolMarshalerType{}
 }
 
