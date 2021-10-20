@@ -33,8 +33,14 @@ func (userRoleType) GetSchema(_ context.Context) (tfsdk.Schema, diag.Diagnostics
 				Type:     types.StringType,
 				Required: true,
 				Validators: []tfsdk.AttributeValidator{
+					// TODO full validation, see requirements in https://developer.salesforce.com/docs/atlas.en-us.api.meta/api/sforce_api_objects_role.htm
+					/*
+						Developer Name: The User Role API Name can only contain underscores and alphanumeric characters.
+						It must be unique, begin with a letter, not include spaces, not end with an
+						underscore, and not contain two consecutive underscores.
+					*/
 					notEmptyString{},
-				}, // TODO full validation, see requirements in https://developer.salesforce.com/docs/atlas.en-us.api.meta/api/sforce_api_objects_role.htm
+				},
 			},
 			"parent_role_id": {
 				Type:     types.StringType,

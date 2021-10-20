@@ -64,11 +64,11 @@ func (p profileDataSource) Read(ctx context.Context, req tfsdk.ReadDataSourceReq
 	var query profileQueryResponse
 	nameFilter := fmt.Sprintf("Name = '%s'", pData.Name)
 	if err := p.client.Query(force.BuildQuery("Id, Name", "Profile", []string{nameFilter}), &query); err != nil {
-		resp.Diagnostics.AddError("Error getting Profile", err.Error())
+		resp.Diagnostics.AddError("Error Getting Profile", err.Error())
 		return
 	}
 	if len(query.Records) == 0 {
-		resp.Diagnostics.AddError("Error getting Profile", fmt.Sprintf("No Profile where %s", nameFilter))
+		resp.Diagnostics.AddError("Error Getting Profile", fmt.Sprintf("No Profile where %s", nameFilter))
 		return
 	}
 

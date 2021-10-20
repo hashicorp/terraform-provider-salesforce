@@ -65,11 +65,11 @@ func (u userLicenceDataSource) Read(ctx context.Context, req tfsdk.ReadDataSourc
 	var query userLicenseQueryResponse
 	licenseDefinitionKeyFilter := fmt.Sprintf("LicenseDefinitionKey = '%s'", uData.LicenseDefinitionKey)
 	if err := u.client.Query(force.BuildQuery("Id, LicenseDefinitionKey", "UserLicense", []string{licenseDefinitionKeyFilter}), &query); err != nil {
-		resp.Diagnostics.AddError("Error getting User License", err.Error())
+		resp.Diagnostics.AddError("Error Getting User License", err.Error())
 		return
 	}
 	if len(query.Records) == 0 {
-		resp.Diagnostics.AddError("Error getting User License", fmt.Sprintf("No User License where %s", licenseDefinitionKeyFilter))
+		resp.Diagnostics.AddError("Error Getting User License", fmt.Sprintf("No User License where %s", licenseDefinitionKeyFilter))
 		return
 	}
 
