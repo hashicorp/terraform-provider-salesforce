@@ -26,13 +26,13 @@ jobs:
     steps:
 
     - name: Set up Go
-      uses: actions/setup-go@v2.1.3
+      uses: actions/setup-go@v2.1.4
       with:
         go-version: '1.16'
       id: go
 
     - name: Check out code into the Go module directory
-      uses: actions/checkout@v2.3.4
+      uses: actions/checkout@v2.3.5
 
     - name: Get dependencies
       run: |
@@ -53,17 +53,17 @@ jobs:
       matrix:
         # list whatever Terraform versions here you would like to support
         terraform:
-          - '1.0.5'
+          - '1.0.9'
     steps:
 
     - name: Set up Go
-      uses: actions/setup-go@v2.1.3
+      uses: actions/setup-go@v2.1.4
       with:
         go-version: '1.16'
       id: go
 
     - name: Check out code into the Go module directory
-      uses: actions/checkout@v2.3.4
+      uses: actions/checkout@v2.3.5
 
     - name: Get dependencies
       run: |
@@ -74,7 +74,7 @@ jobs:
       env:
         TF_ACC: "1"
         TF_ACC_TERRAFORM_VERSION: ${{ matrix.terraform }}
-        SALESFORCE_API_VERSION: "v51.0"
+        SALESFORCE_API_VERSION: "v53.0"
         SALESFORCE_CLIENT_ID: ${{ secrets.SALESFORCE_CLIENT_ID }}
         SALESFORCE_PRIVATE_KEY: ${{ secrets.SALESFORCE_PRIVATE_KEY }}
         SALESFORCE_USERNAME: ${{ secrets.SALESFORCE_USERNAME }}
