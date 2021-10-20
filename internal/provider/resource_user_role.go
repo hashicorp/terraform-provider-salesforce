@@ -26,14 +26,14 @@ func (userRoleType) GetSchema(_ context.Context) (tfsdk.Schema, diag.Diagnostics
 				Type:     types.StringType,
 				Required: true,
 				Validators: []tfsdk.AttributeValidator{
-					emptyString{},
+					notEmptyString{},
 				},
 			},
 			"developer_name": {
 				Type:     types.StringType,
 				Required: true,
 				Validators: []tfsdk.AttributeValidator{
-					emptyString{},
+					notEmptyString{},
 				}, // TODO full validation, see requirements in https://developer.salesforce.com/docs/atlas.en-us.api.meta/api/sforce_api_objects_role.htm
 			},
 			"parent_role_id": {

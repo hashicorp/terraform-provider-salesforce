@@ -10,11 +10,11 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/types"
 )
 
-type emptyString struct {
+type notEmptyString struct {
 	emptyDescriptions
 }
 
-func (emptyString) Validate(_ context.Context, req tfsdk.ValidateAttributeRequest, resp *tfsdk.ValidateAttributeResponse) {
+func (notEmptyString) Validate(_ context.Context, req tfsdk.ValidateAttributeRequest, resp *tfsdk.ValidateAttributeResponse) {
 	attr := req.AttributeConfig.(types.String)
 	if attr.Unknown {
 		return

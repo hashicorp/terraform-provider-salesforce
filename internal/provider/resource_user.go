@@ -46,7 +46,7 @@ func (userType) GetSchema(_ context.Context) (tfsdk.Schema, diag.Diagnostics) {
 				Type:     types.StringType,
 				Required: true,
 				Validators: []tfsdk.AttributeValidator{
-					emptyString{},
+					notEmptyString{},
 				},
 			},
 			"email": {
@@ -88,7 +88,7 @@ func (userType) GetSchema(_ context.Context) (tfsdk.Schema, diag.Diagnostics) {
 				Type:     types.StringType,
 				Required: true,
 				Validators: []tfsdk.AttributeValidator{
-					emptyString{},
+					notEmptyString{},
 				},
 			},
 			"locale_sid_key": {
@@ -109,7 +109,7 @@ func (userType) GetSchema(_ context.Context) (tfsdk.Schema, diag.Diagnostics) {
 				Type:     types.StringType,
 				Required: true,
 				Validators: []tfsdk.AttributeValidator{
-					emptyString{},
+					notEmptyString{},
 				},
 				PlanModifiers: tfsdk.AttributePlanModifiers{
 					NormalizeId{},

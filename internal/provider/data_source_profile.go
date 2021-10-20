@@ -25,7 +25,7 @@ func (profileDatasourceType) GetSchema(_ context.Context) (tfsdk.Schema, diag.Di
 				Type:     types.StringType,
 				Required: true,
 				Validators: []tfsdk.AttributeValidator{
-					emptyString{},
+					notEmptyString{},
 				},
 			},
 		},

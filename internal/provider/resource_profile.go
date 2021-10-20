@@ -27,7 +27,7 @@ func (profileType) GetSchema(_ context.Context) (tfsdk.Schema, diag.Diagnostics)
 				Type:     types.StringType,
 				Required: true,
 				Validators: []tfsdk.AttributeValidator{
-					emptyString{},
+					notEmptyString{},
 				},
 			},
 			"description": {
@@ -38,7 +38,7 @@ func (profileType) GetSchema(_ context.Context) (tfsdk.Schema, diag.Diagnostics)
 				Type:     types.StringType,
 				Required: true,
 				Validators: []tfsdk.AttributeValidator{
-					emptyString{},
+					notEmptyString{},
 				},
 				PlanModifiers: tfsdk.AttributePlanModifiers{
 					NormalizeId{},
