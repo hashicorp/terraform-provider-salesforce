@@ -60,13 +60,13 @@ func TestAccResourceProfile_update(t *testing.T) {
 
 func testAccResourceProfile_basic(name string) string {
 	return fmt.Sprintf(`
-data "salesforce_user_license" "fdc" {
-  license_definition_key = "PID_FDC_FREE"
+data "salesforce_user_license" "standard" {
+  license_definition_key = "AUL"
 }
 
 resource "salesforce_profile" "test" {
   name            = "%s"
-  user_license_id = data.salesforce_user_license.fdc.id
+  user_license_id = data.salesforce_user_license.standard.id
   description     = "test"
 }
 `, name)
@@ -74,13 +74,13 @@ resource "salesforce_profile" "test" {
 
 func testAccResourceProfile_with_permissions(name string) string {
 	return fmt.Sprintf(`
-data "salesforce_user_license" "fdc" {
-  license_definition_key = "PID_FDC_FREE"
+data "salesforce_user_license" "standard" {
+  license_definition_key = "AUL"
 }
 
 resource "salesforce_profile" "test" {
   name            = "%s"
-  user_license_id = data.salesforce_user_license.fdc.id
+  user_license_id = data.salesforce_user_license.standard.id
   description     = "test update"
   permissions_email_single = true
   permissions_edit_task = true
