@@ -15,7 +15,7 @@ import (
 )
 
 const (
-	salesforceLoginServer   = "https://hashicorp--terraform2.my.salesforce.com"
+	salesforceLoginServer   = "https://login.salesforce.com"
 	salesforceOAuthEndpoint = "/services/oauth2/token"
 )
 
