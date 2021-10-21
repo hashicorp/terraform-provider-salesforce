@@ -15,8 +15,9 @@ import (
 )
 
 const (
-	salesforceLoginServer   = "https://test.salesforce.com"
-	salesforceOAuthEndpoint = "/services/oauth2/token"
+	productionSalesforceLoginServer = "https://login.salesforce.com"
+	sandboxSalesforceLoginServer    = "https://test.salesforce.com"
+	salesforceOAuthEndpoint         = "/services/oauth2/token"
 )
 
 type AuthResponse struct {
@@ -27,7 +28,7 @@ type AuthResponse struct {
 	TokenType   string `json:"token_type"`
 }
 
-func SignJWT(privateKey []byte, user string, clientId string) (string, error) {
+func SignJWT(privateKey []byte, user string, clientId string, audience string) (string, error) {
 	priv, err := jwt.ParseRSAPrivateKeyFromPEM(privateKey)
 	if err != nil {
 		return "", err
@@ -37,13 +38,13 @@ func SignJWT(privateKey []byte, user string, clientId string) (string, error) {
 		ExpiresAt: time.Now().UTC().Add(3 * time.Minute).Unix(),
 		Subject:   user,
 		Issuer:    clientId,
-		Audience:  salesforceLoginServer,
+		Audience:  audience,
 	})
 
 	return token.SignedString(priv)
 }
 
-func Authenticate(signedJwt string) (AuthResponse, error) {
+func Authenticate(domain string, signedJwt string) (AuthResponse, error) {
 	var oauth AuthResponse
 
 	payload := url.Values{}
@@ -54,7 +55,7 @@ func Authenticate(signedJwt string) (AuthResponse, error) {
 	body := strings.NewReader(payload.Encode())
 
 	// Build Request
-	req, err := http.NewRequest("POST", salesforceLoginServer+salesforceOAuthEndpoint, body)
+	req, err := http.NewRequest("POST", domain+salesforceOAuthEndpoint, body)
 	if err != nil {
 		return oauth, fmt.Errorf("Error creating authentication request: %v", err)
 	}
@@ -94,6 +95,7 @@ type Config struct {
 	PrivateKey string
 	ApiVersion string
 	Username   string
+	Sandbox    bool
 }
 
 func Client(config Config) (*force.ForceApi, error) {
@@ -106,12 +108,17 @@ func Client(config Config) (*force.ForceApi, error) {
 		return nil, err
 	}
 
-	signedJwt, err := SignJWT(privateKeyBytes, config.Username, config.ClientId)
+	loginDomain := productionSalesforceLoginServer
+	if config.Sandbox {
+		loginDomain = sandboxSalesforceLoginServer
+	}
+
+	signedJwt, err := SignJWT(privateKeyBytes, config.Username, config.ClientId, loginDomain)
 	if err != nil {
 		return nil, err
 	}
 
-	resp, err := Authenticate(signedJwt)
+	resp, err := Authenticate(loginDomain, signedJwt)
 	if err != nil {
 		return nil, err
 	}
