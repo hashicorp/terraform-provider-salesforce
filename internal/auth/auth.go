@@ -15,7 +15,7 @@ import (
 )
 
 const (
-	salesforceLoginServer   = "https://login.salesforce.com"
+	salesforceLoginServer   = "https://test.salesforce.com"
 	salesforceOAuthEndpoint = "/services/oauth2/token"
 )
 
