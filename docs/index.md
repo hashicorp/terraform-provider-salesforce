@@ -28,5 +28,6 @@ provider "googleworkspace" {
 
 - **api_version** (String)
 - **client_id** (String)
+- **is_sandbox_org** (Boolean)
 - **private_key** (String, Sensitive)
 - **username** (String)

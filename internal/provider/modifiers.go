@@ -77,17 +77,3 @@ func (staticComputed) Modify(_ context.Context, req tfsdk.ModifyAttributePlanReq
 	}
 	resp.AttributePlan = req.AttributeState
 }
-
-type optionalComputed struct {
-	emptyDescriptions
-}
-
-func (optionalComputed) Modify(_ context.Context, req tfsdk.ModifyAttributePlanRequest, resp *tfsdk.ModifyAttributePlanResponse) {
-	if req.AttributeState == nil {
-		return
-	}
-	// TODO this is bool specific, ideally we could check unset more generically
-	if req.AttributeConfig == nil || req.AttributeConfig.Equal(types.Bool{Null: true}) {
-		resp.AttributePlan = req.AttributeState
-	}
-}

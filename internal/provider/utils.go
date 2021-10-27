@@ -18,6 +18,6 @@ func (emptyDescriptions) MarkdownDescription(ctx context.Context) string {
 
 var errorNotFoundRegexp = regexp.MustCompile("NOT_FOUND|does not exist")
 
-func isErrorNotFound(err error) bool {
+func isNotFoundError(err error) bool {
 	return errorNotFoundRegexp.MatchString(err.Error())
 }

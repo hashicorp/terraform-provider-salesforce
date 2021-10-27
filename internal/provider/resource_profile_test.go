@@ -47,12 +47,15 @@ func TestAccResourceProfile_update(t *testing.T) {
 				ImportStateVerify: true,
 			},
 			{
+				// importing permissions map not currently possible
 				Config: testAccResourceProfile_with_permissions(name),
-			},
-			{
-				ResourceName:      "salesforce_profile.test",
-				ImportState:       true,
-				ImportStateVerify: true,
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttr("salesforce_profile.test", "name", name),
+					resource.TestCheckResourceAttr("salesforce_profile.test", "description", "test update"),
+					resource.TestCheckResourceAttr("salesforce_profile.test", "permissions.%", "2"),
+					resource.TestCheckResourceAttr("salesforce_profile.test", "permissions.EditTask", "true"),
+					resource.TestCheckResourceAttr("salesforce_profile.test", "permissions.EmailSingle", "true"),
+				),
 			},
 		},
 	})
@@ -82,8 +85,10 @@ resource "salesforce_profile" "test" {
   name            = "%s"
   user_license_id = data.salesforce_user_license.standard.id
   description     = "test update"
-  permissions_email_single = true
-  permissions_edit_task = true
+  permissions = {
+    EmailSingle = true
+    EditTask = true
+  }
 }
 `, name)
 }

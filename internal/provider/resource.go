@@ -37,8 +37,7 @@ func (r *Resource) Create(ctx context.Context, req tfsdk.CreateResourceRequest, 
 	r.Data.SetId(sfResp.Id)
 
 	if r.NeedsGetAfterUpsert {
-		err := r.Client.GetSObject(r.Data.GetId(), nil, sobject)
-		if err != nil {
+		if err := r.Client.GetSObject(r.Data.GetId(), nil, sobject); err != nil {
 			resp.Diagnostics.AddError(fmt.Sprintf("Error Getting %s", sobject.ApiName()), err.Error())
 			return
 		}
@@ -54,9 +53,8 @@ func (r *Resource) Read(ctx context.Context, req tfsdk.ReadResourceRequest, resp
 		return
 	}
 
-	err := r.Client.GetSObject(r.Data.GetId(), nil, sobject)
-	if err != nil {
-		if isErrorNotFound(err) {
+	if err := r.Client.GetSObject(r.Data.GetId(), nil, sobject); err != nil {
+		if isNotFoundError(err) {
 			resp.State.RemoveResource(ctx)
 		} else {
 			resp.Diagnostics.AddError(fmt.Sprintf("Error Getting %s", sobject.ApiName()), err.Error())
@@ -74,16 +72,14 @@ func (r *Resource) Update(ctx context.Context, req tfsdk.UpdateResourceRequest, 
 		return
 	}
 
-	err := r.Client.UpdateSObject(r.Data.GetId(), r.Data.Updatable())
-	if err != nil {
+	if err := r.Client.UpdateSObject(r.Data.GetId(), r.Data.Updatable()); err != nil {
 		resp.Diagnostics.AddError(fmt.Sprintf("Error Updating %s", sobject.ApiName()), err.Error())
 		return
 	}
 
 	if r.NeedsGetAfterUpsert {
-		err := r.Client.GetSObject(r.Data.GetId(), nil, sobject)
-		if err != nil {
-			if isErrorNotFound(err) {
+		if err := r.Client.GetSObject(r.Data.GetId(), nil, sobject); err != nil {
+			if isNotFoundError(err) {
 				resp.State.RemoveResource(ctx)
 			} else {
 				resp.Diagnostics.AddError(fmt.Sprintf("Error Getting %s", sobject.ApiName()), err.Error())
@@ -102,9 +98,8 @@ func (r *Resource) Delete(ctx context.Context, req tfsdk.DeleteResourceRequest, 
 		return
 	}
 
-	err := r.Client.DeleteSObject(r.Data.GetId(), sobject)
-	if err != nil {
-		if !isErrorNotFound(err) {
+	if err := r.Client.DeleteSObject(r.Data.GetId(), sobject); err != nil {
+		if !isNotFoundError(err) {
 			resp.Diagnostics.AddError(fmt.Sprintf("Error Deleting %s", sobject.ApiName()), err.Error())
 			return
 		}
@@ -116,8 +111,7 @@ func (r *Resource) Delete(ctx context.Context, req tfsdk.DeleteResourceRequest, 
 func (r *Resource) ImportState(ctx context.Context, req tfsdk.ImportResourceStateRequest, resp *tfsdk.ImportResourceStateResponse) {
 	sobject := r.Data.Instance()
 	id := normalizeId(req.ID)
-	err := r.Client.GetSObject(id, nil, sobject)
-	if err != nil {
+	if err := r.Client.GetSObject(id, nil, sobject); err != nil {
 		resp.Diagnostics.AddError(fmt.Sprintf("Error Getting %s", sobject.ApiName()), err.Error())
 		return
 	}

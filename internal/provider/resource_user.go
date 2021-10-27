@@ -174,10 +174,10 @@ func (u *userResource) Delete(ctx context.Context, req tfsdk.DeleteResourceReque
 	isActive := false
 	err := u.Client.UpdateSObject(id.(types.String).Value, userResourceData{IsActive: &isActive})
 	if err != nil {
-		if isErrorNotFound(err) {
+		if isNotFoundError(err) {
 			resp.State.RemoveResource(ctx)
 		} else {
-			resp.Diagnostics.AddError("Error deleting User", err.Error())
+			resp.Diagnostics.AddError("Error Deleting User", err.Error())
 		}
 		return
 	}
