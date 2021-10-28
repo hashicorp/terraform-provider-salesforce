@@ -112,7 +112,7 @@ func (r *Resource) ImportState(ctx context.Context, req tfsdk.ImportResourceStat
 	sobject := r.Data.Instance()
 	id := normalizeId(req.ID)
 	if err := r.Client.GetSObject(id, nil, sobject); err != nil {
-		resp.Diagnostics.AddError(fmt.Sprintf("Error Getting %s", sobject.ApiName()), err.Error())
+		resp.Diagnostics.AddError(fmt.Sprintf("Error Importing %s", sobject.ApiName()), err.Error())
 		return
 	}
 	r.Data.SetId(id)

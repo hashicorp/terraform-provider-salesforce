@@ -2,7 +2,6 @@ package provider
 
 import (
 	"context"
-	"fmt"
 	"strings"
 
 	"github.com/hashicorp/terraform-plugin-framework/attr"
@@ -70,18 +69,78 @@ type profileResource struct {
 }
 
 type profileResourceData struct {
-	Name          string       `tfsdk:"name" force:",omitempty"`
-	Description   *string      `tfsdk:"description" force:",omitempty"`
-	UserLicenseId string       `tfsdk:"user_license_id" force:",omitempty"`
-	Permissions   types.Map    `tfsdk:"permissions" force:"-"`
-	Id            types.String `tfsdk:"id" force:"-"`
+	Name          string       `tfsdk:"name"`
+	Description   *string      `tfsdk:"description"`
+	UserLicenseId string       `tfsdk:"user_license_id"`
+	Permissions   types.Map    `tfsdk:"permissions"`
+	Id            types.String `tfsdk:"id"`
 }
 
-func (profileResourceData) ApiName() string {
+func (p profileResourceData) PermissionKeys(prefix string) []string {
+	var keys []string
+	for k := range p.Permissions.Elems {
+		keys = append(keys, prefix+k)
+	}
+	return keys
+}
+
+func (p profileResourceData) ToMap(exclude ...string) profileMap {
+	pMap := make(profileMap)
+	if p.Name != "" {
+		pMap["Name"] = p.Name
+	}
+	if p.Description != nil && *p.Description != "" {
+		pMap["Description"] = *p.Description
+	}
+	if p.UserLicenseId != "" {
+		pMap["UserLicenseId"] = p.UserLicenseId
+	}
+	// flatten permissions
+	for k, v := range p.Permissions.Elems {
+		key := "Permissions" + k
+		pMap[key] = v.(types.Bool).Value
+	}
+	// exclude keys, useful for update
+	for _, k := range exclude {
+		delete(pMap, k)
+	}
+	return pMap
+}
+
+// due to the permissions map, we need a separate type that is flattened to
+// what SF expects
+type profileMap map[string]interface{}
+
+func (p profileMap) ToStateData(includePermissions ...string) profileResourceData {
+	data := profileResourceData{
+		Name:          p["Name"].(string),
+		UserLicenseId: p["UserLicenseId"].(string),
+	}
+	desc := p["Description"].(string)
+	data.Description = &desc
+	// expand permissions
+	permissions := make(map[string]attr.Value, len(includePermissions))
+	for _, k := range includePermissions {
+		v, ok := p[k]
+		trimmedKey := strings.TrimPrefix(k, "Permissions")
+		if ok {
+			permissions[trimmedKey] = types.Bool{Value: v.(bool)}
+		} else {
+			// set to unknown, maybe we should panic?
+			permissions[trimmedKey] = types.Bool{Unknown: true}
+		}
+	}
+	if len(permissions) > 0 {
+		data.Permissions = types.Map{ElemType: types.BoolType, Elems: permissions}
+	}
+	return data
+}
+
+func (profileMap) ApiName() string {
 	return "Profile"
 }
 
-func (profileResourceData) ExternalIdApiName() string {
+func (profileMap) ExternalIdApiName() string {
 	return ""
 }
 
@@ -92,37 +151,12 @@ func (p *profileResource) Create(ctx context.Context, req tfsdk.CreateResourceRe
 		return
 	}
 
-	// create a resource without any permissions
-	sfResp, err := p.client.InsertSObject(data)
+	sfResp, err := p.client.InsertSObject(data.ToMap())
 	if err != nil {
-		resp.Diagnostics.AddError(fmt.Sprintf("Error Inserting %s", data.ApiName()), err.Error())
+		resp.Diagnostics.AddError("Error Inserting Profile", err.Error())
 		return
 	}
 	data.Id = types.String{Value: sfResp.Id}
-
-	perms := permissionsMapFromTypesMap(data.Permissions.Elems)
-	if len(perms) > 0 {
-		if err := p.client.UpdateSObject(data.Id.Value, perms); err != nil {
-			resp.Diagnostics.AddError(fmt.Sprintf("Error Updating %s Permissions", data.ApiName()), err.Error())
-			return
-		}
-	}
-
-	if err := p.client.GetSObject(data.Id.Value, nil, &data); err != nil {
-		resp.Diagnostics.AddError(fmt.Sprintf("Error Getting %s", data.ApiName()), err.Error())
-		return
-	}
-
-	if len(perms) > 0 {
-		// we re-fetch the entire resource into a generic map[string]interface{}
-		var profile permissionsMap
-		if err := p.client.GetSObject(data.Id.Value, nil, &profile); err != nil {
-			resp.Diagnostics.AddError(fmt.Sprintf("Error Getting %s Permissions", data.ApiName()), err.Error())
-			return
-		}
-		// and just prune down to the user specified ones
-		data.Permissions = types.Map{ElemType: types.BoolType, Elems: mergePermissions(perms, profile)}
-	}
 
 	resp.Diagnostics = resp.State.Set(ctx, &data)
 }
@@ -134,29 +168,21 @@ func (p *profileResource) Read(ctx context.Context, req tfsdk.ReadResourceReques
 		return
 	}
 
-	if err := p.client.GetSObject(data.Id.Value, nil, &data); err != nil {
+	var pMap profileMap
+	if err := p.client.GetSObject(data.Id.Value, nil, &pMap); err != nil {
 		if isNotFoundError(err) {
 			resp.State.RemoveResource(ctx)
 		} else {
-			resp.Diagnostics.AddError(fmt.Sprintf("Error Getting %s", data.ApiName()), err.Error())
+			resp.Diagnostics.AddError("Error Getting Profile", err.Error())
 		}
 		return
 	}
 
-	if len(data.Permissions.Elems) > 0 {
-		var profile permissionsMap
-		if err := p.client.GetSObject(data.Id.Value, nil, &profile); err != nil {
-			if isNotFoundError(err) {
-				resp.State.RemoveResource(ctx)
-			} else {
-				resp.Diagnostics.AddError(fmt.Sprintf("Error Getting %s Permissions", data.ApiName()), err.Error())
-			}
-			return
-		}
-		data.Permissions = types.Map{ElemType: types.BoolType, Elems: mergePermissions(permissionsMapFromTypesMap(data.Permissions.Elems), profile)}
-	}
+	d := pMap.ToStateData(data.PermissionKeys("Permissions")...)
+	// copy the ID back over
+	d.Id = data.Id
 
-	resp.Diagnostics = resp.State.Set(ctx, &data)
+	resp.Diagnostics = resp.State.Set(ctx, &d)
 }
 
 func (p *profileResource) Update(ctx context.Context, req tfsdk.UpdateResourceRequest, resp *tfsdk.UpdateResourceResponse) {
@@ -166,37 +192,9 @@ func (p *profileResource) Update(ctx context.Context, req tfsdk.UpdateResourceRe
 		return
 	}
 
-	// zero out fields that can't be updated
-	updatable := data
-	updatable.UserLicenseId = ""
-
-	if err := p.client.UpdateSObject(data.Id.Value, updatable); err != nil {
-		resp.Diagnostics.AddError(fmt.Sprintf("Error Updating %s", data.ApiName()), err.Error())
+	if err := p.client.UpdateSObject(data.Id.Value, data.ToMap("UserLicenseId")); err != nil {
+		resp.Diagnostics.AddError("Error Updating Profile", err.Error())
 		return
-	}
-
-	perms := permissionsMapFromTypesMap(data.Permissions.Elems)
-	if len(perms) > 0 {
-		if err := p.client.UpdateSObject(data.Id.Value, perms); err != nil {
-			resp.Diagnostics.AddError(fmt.Sprintf("Error Updating %s Permissions", data.ApiName()), err.Error())
-			return
-		}
-	}
-
-	if err := p.client.GetSObject(data.Id.Value, nil, &data); err != nil {
-		resp.Diagnostics.AddError(fmt.Sprintf("Error Getting %s", data.ApiName()), err.Error())
-		return
-	}
-
-	if len(perms) > 0 {
-		// we re-fetch the entire resource into a generic map[string]interface{}
-		var profile permissionsMap
-		if err := p.client.GetSObject(data.Id.Value, nil, &profile); err != nil {
-			resp.Diagnostics.AddError(fmt.Sprintf("Error Getting %s Permissions", data.ApiName()), err.Error())
-			return
-		}
-		// and just prune down to the user specified ones
-		data.Permissions = types.Map{ElemType: types.BoolType, Elems: mergePermissions(perms, profile)}
 	}
 
 	resp.Diagnostics = resp.State.Set(ctx, &data)
@@ -209,9 +207,9 @@ func (p *profileResource) Delete(ctx context.Context, req tfsdk.DeleteResourceRe
 		return
 	}
 
-	if err := p.client.DeleteSObject(data.Id.Value, data); err != nil {
+	if err := p.client.DeleteSObject(data.Id.Value, data.ToMap()); err != nil {
 		if !isNotFoundError(err) {
-			resp.Diagnostics.AddError(fmt.Sprintf("Error Deleting %s", data.ApiName()), err.Error())
+			resp.Diagnostics.AddError("Error Deleting Profile", err.Error())
 			return
 		}
 	}
@@ -220,55 +218,18 @@ func (p *profileResource) Delete(ctx context.Context, req tfsdk.DeleteResourceRe
 }
 
 func (p *profileResource) ImportState(ctx context.Context, req tfsdk.ImportResourceStateRequest, resp *tfsdk.ImportResourceStateResponse) {
-	var data profileResourceData
 	id := normalizeId(req.ID)
-	if err := p.client.GetSObject(id, nil, &data); err != nil {
-		resp.Diagnostics.AddError(fmt.Sprintf("Error Getting %s", data.ApiName()), err.Error())
+	var pMap profileMap
+	if err := p.client.GetSObject(id, nil, &pMap); err != nil {
+		resp.Diagnostics.AddError("Error Importing Profile", err.Error())
 		return
 	}
+	data := pMap.ToStateData()
 	data.Id = types.String{Value: id}
 	if diags := resp.State.Set(ctx, &data); diags.HasError() {
 		resp.Diagnostics = diags
 		return
 	}
 
-	resp.Diagnostics.AddWarning("Profile imported without permissions", "specific permissions can always be explicitly set with the permissions = {} attribute after import, but existing permission settings cannot be imported due to technical limitations.")
-}
-
-func permissionsMapFromTypesMap(m map[string]attr.Value) permissionsMap {
-	permissions := make(permissionsMap, len(m))
-	for k, v := range m {
-		val := v.(types.Bool)
-		if !val.Unknown && !val.Null {
-			// SF API has a Permissions prefix to all the permissions attributes
-			key := "Permissions" + k
-			permissions[key] = val.Value
-		}
-	}
-	return permissions
-}
-
-func mergePermissions(sent, response map[string]interface{}) map[string]attr.Value {
-	m := make(map[string]attr.Value, len(sent))
-	for k := range sent {
-		// remove the redundant prefix when saving into state
-		key := strings.TrimPrefix(k, "Permissions")
-		if v, ok := response[k]; ok {
-			m[key] = types.Bool{Value: v.(bool)}
-		} else {
-			// set to unknown to force an error, this should not happen
-			m[key] = types.Bool{Unknown: true}
-		}
-	}
-	return m
-}
-
-type permissionsMap map[string]interface{}
-
-func (permissionsMap) ApiName() string {
-	return "Profile"
-}
-
-func (permissionsMap) ExternalIdApiName() string {
-	return ""
+	resp.Diagnostics.AddWarning("Profile imported without permissions", "permissions can be explicitly set with the permissions = {} attribute after import, but existing permission settings cannot be imported due to technical limitations.")
 }
