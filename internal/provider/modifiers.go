@@ -38,7 +38,6 @@ type NormalizeId struct {
 
 func (NormalizeId) Modify(_ context.Context, req tfsdk.ModifyAttributePlanRequest, resp *tfsdk.ModifyAttributePlanResponse) {
 	if req.AttributeState == nil {
-		resp.AttributePlan = req.AttributePlan
 		return
 	}
 	plan := req.AttributePlan.(types.String)
@@ -76,4 +75,19 @@ func (staticComputed) Modify(_ context.Context, req tfsdk.ModifyAttributePlanReq
 		return
 	}
 	resp.AttributePlan = req.AttributeState
+}
+
+type fixNullToUnknown struct {
+	emptyDescriptions
+}
+
+func (fixNullToUnknown) Modify(_ context.Context, req tfsdk.ModifyAttributePlanRequest, resp *tfsdk.ModifyAttributePlanResponse) {
+	if req.AttributeState == nil {
+		return
+	}
+	state := req.AttributeState.(types.String)
+	config := req.AttributeConfig.(types.String)
+	if config.Unknown && state.Null {
+		resp.AttributePlan = config
+	}
 }

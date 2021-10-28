@@ -47,6 +47,7 @@ func (userRoleType) GetSchema(_ context.Context) (tfsdk.Schema, diag.Diagnostics
 				Optional: true,
 				PlanModifiers: tfsdk.AttributePlanModifiers{
 					NormalizeId{},
+					fixNullToUnknown{},
 				},
 			},
 		},

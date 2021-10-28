@@ -31,7 +31,6 @@ func TestAccResourceUserRole_basic(t *testing.T) {
 
 func TestAccResourceUserRole_update(t *testing.T) {
 	t.Parallel()
-	t.Skip("This test can't run due to a bug/problem")
 
 	developerName := fmt.Sprintf("tf_test_%s", acctest.RandString(10))
 	developerNameParent := fmt.Sprintf("tf_test_%s", acctest.RandString(10))
