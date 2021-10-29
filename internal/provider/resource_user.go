@@ -152,6 +152,7 @@ func (userType) GetSchema(_ context.Context) (tfsdk.Schema, diag.Diagnostics) {
 				Optional:    true,
 				PlanModifiers: tfsdk.AttributePlanModifiers{
 					NormalizeId{},
+					fixNullToUnknown{},
 				},
 			},
 		},
@@ -207,7 +208,7 @@ type userResourceData struct {
 	ProfileID         string       `tfsdk:"profile_id" force:",omitempty"`
 	TimeZoneSidKey    string       `tfsdk:"time_zone_sid_key" force:",omitempty"`
 	Username          string       `tfsdk:"username" force:",omitempty"`
-	UserRoleId        *string      `tfsdk:"user_role_id" force:",omitempty"`
+	UserRoleId        *string      `tfsdk:"user_role_id"`
 	IsActive          *bool        `tfsdk:"-" force:",omitempty"`
 	Id                types.String `tfsdk:"id" force:"-"`
 }

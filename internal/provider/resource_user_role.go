@@ -78,7 +78,7 @@ type userRoleResource struct {
 type userRoleResourceData struct {
 	Name          string       `tfsdk:"name" force:",omitempty"`
 	DeveloperName string       `tfsdk:"developer_name" force:",omitempty"`
-	ParentRoleId  *string      `tfsdk:"parent_role_id" force:",omitempty"`
+	ParentRoleId  *string      `tfsdk:"parent_role_id"`
 	Id            types.String `tfsdk:"id" force:"-"`
 }
 

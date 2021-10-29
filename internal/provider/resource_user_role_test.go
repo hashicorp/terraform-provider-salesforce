@@ -55,6 +55,9 @@ func TestAccResourceUserRole_update(t *testing.T) {
 				ImportState:       true,
 				ImportStateVerify: true,
 			},
+			{
+				Config: testAccResourceUserRole_with_parent_no_assign(developerNameParent, developerName),
+			},
 		},
 	})
 }
@@ -79,6 +82,20 @@ resource "salesforce_user_role" "test" {
   name           = "child"
   developer_name = "%s"
   parent_role_id = resource.salesforce_user_role.parent.id
+}
+`, developerNameParent, developerName)
+}
+
+func testAccResourceUserRole_with_parent_no_assign(developerNameParent, developerName string) string {
+	return fmt.Sprintf(`
+resource "salesforce_user_role" "parent" {
+  name           = "parent"
+  developer_name = "%s"
+}
+
+resource "salesforce_user_role" "test" {
+  name           = "child"
+  developer_name = "%s"
 }
 `, developerNameParent, developerName)
 }

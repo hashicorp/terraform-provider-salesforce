@@ -72,14 +72,21 @@ func TestAccResourceUser_update(t *testing.T) {
 				ImportState:       true,
 				ImportStateVerify: true,
 			},
+			{
+				// put it back to a config without a role assignment
+				// since users are never deleted only deactivated
+				// if the role assignment continues to exist the
+				// role created for the test can't be cleaned up
+				Config: testAccResourceUser_full_no_role(email, username),
+			},
 		},
 	})
 }
 
 func testAccResourceUser_basic(email, username string) string {
 	return fmt.Sprintf(`
-data "salesforce_profile" "chatter_free" {
-  name = "Chatter Free User"
+data "salesforce_profile" "standard" {
+  name = "Standard User"
 }
 
 resource "salesforce_user" "test" {
@@ -87,7 +94,7 @@ resource "salesforce_user" "test" {
   email = "%s"
   last_name = "test"
   username = "%s"
-  profile_id = data.salesforce_profile.chatter_free.id
+  profile_id = data.salesforce_profile.standard.id
 }
 `, email, username)
 }
@@ -96,6 +103,37 @@ func testAccResourceUser_full(email, username string) string {
 	return fmt.Sprintf(`
 data "salesforce_profile" "standard" {
   name = "Standard User"
+}
+
+resource "salesforce_user_role" "usertest" {
+  name           = "usertest"
+  developer_name = "usertest"
+}
+
+resource "salesforce_user" "test" {
+  alias = "test"
+  email = "%s"
+  last_name = "test"
+  username = "%s"
+  profile_id = data.salesforce_profile.standard.id
+  user_role_id = salesforce_user_role.usertest.id
+  email_encoding_key  = "ISO-8859-1"
+  language_locale_key = "en_US"
+  time_zone_sid_key   = "America/Chicago"
+  locale_sid_key      = "en_US"
+}
+`, email, username)
+}
+
+func testAccResourceUser_full_no_role(email, username string) string {
+	return fmt.Sprintf(`
+data "salesforce_profile" "standard" {
+  name = "Standard User"
+}
+
+resource "salesforce_user_role" "usertest" {
+  name           = "usertest"
+  developer_name = "usertest"
 }
 
 resource "salesforce_user" "test" {

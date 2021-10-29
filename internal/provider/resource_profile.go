@@ -131,7 +131,7 @@ func (p profileMap) ToStateData(includePermissions ...string) profileResourceDat
 		if ok {
 			permissions[trimmedKey] = types.Bool{Value: v.(bool)}
 		} else {
-			// set to unknown, maybe we should panic?
+			// TODO set to unknown, maybe we should panic?
 			permissions[trimmedKey] = types.Bool{Unknown: true}
 		}
 	}
