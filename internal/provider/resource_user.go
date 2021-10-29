@@ -121,6 +121,14 @@ func (userType) GetSchema(_ context.Context) (tfsdk.Schema, diag.Diagnostics) {
 				},
 				PlanModifiers: tfsdk.AttributePlanModifiers{
 					NormalizeId{},
+					// TODO would be a good attribute for RequiresReplaceIf since there are restrictions on profile type
+					// and role assignment (even if they are both being changed in one update, the existing profile is
+					// considered in the SF validation). Normally a naive RequiresReplace would be appropriate
+					// however since user(name)s can never be deleted this would be a bad UX. Proposal is to RequiresReplaceIf
+					// a special attribute like `replace_user_if_profile_change = true` if the user wants to avoid
+					// multistep applies or can't change the profile to the desired one (like going from Standard -> Chatter Free).
+					// This still litters the userspace, but spares them a destroy and apply (however they will need to ensure a new
+					// unique username).
 				},
 			},
 			"time_zone_sid_key": {
