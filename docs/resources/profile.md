@@ -29,16 +29,16 @@ resource "salesforce_profile" "example" {
 
 ### Required
 
-- **name** (String)
-- **user_license_id** (String)
+- **name** (String) The name of the profile.
+- **user_license_id** (String) ID of the UserLicense associated with this profile. Forces replacement if updated.
 
 ### Optional
 
-- **description** (String)
-- **permissions** (Map of Boolean)
+- **description** (String) Description of the profile.
+- **permissions** (Map of Boolean) Map of permissions for the profile. At this time specific permissions can only be set, the comprehensive list will not be read from Salesforce. The keys should follow Salesforce 'SnakeCase' format however the 'Permissions' prefix should be omitted. Permissions will not import to state due to a technical limitation, you will need to run a subsequent apply if you have permissions set in config during import.
 
 ### Read-Only
 
-- **id** (String) The ID of this resource.
+- **id** (String) ID of the resource.
 
 

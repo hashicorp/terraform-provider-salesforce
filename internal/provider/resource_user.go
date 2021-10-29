@@ -36,30 +36,34 @@ func (userType) GetSchema(_ context.Context) (tfsdk.Schema, diag.Diagnostics) {
 	return tfsdk.Schema{
 		Attributes: map[string]tfsdk.Attribute{
 			"id": {
-				Type:     types.StringType,
-				Computed: true,
+				Description: "ID of the resource.",
+				Type:        types.StringType,
+				Computed:    true,
 				PlanModifiers: tfsdk.AttributePlanModifiers{
 					staticComputed{},
 				},
 			},
 			"alias": {
-				Type:     types.StringType,
-				Required: true,
+				Description: "The user’s alias. For example, jsmith.",
+				Type:        types.StringType,
+				Required:    true,
 				Validators: []tfsdk.AttributeValidator{
 					notEmptyString{},
 				},
 			},
 			"email": {
-				Type:     types.StringType,
-				Required: true,
+				Description: "The user’s email address.",
+				Type:        types.StringType,
+				Required:    true,
 				Validators: []tfsdk.AttributeValidator{
 					email{},
 				},
 			},
 			"email_encoding_key": {
-				Type:     types.StringType,
-				Optional: true,
-				Computed: true,
+				Description: "The email encoding for the user, such as ISO-8859-1 or UTF-8. Defaults to UTF-8.",
+				Type:        types.StringType,
+				Optional:    true,
+				Computed:    true,
 				Validators: []tfsdk.AttributeValidator{
 					stringInSlice{
 						slice:    picklists.EmailEncodingKeys,
@@ -71,9 +75,10 @@ func (userType) GetSchema(_ context.Context) (tfsdk.Schema, diag.Diagnostics) {
 				},
 			},
 			"language_locale_key": {
-				Type:     types.StringType,
-				Optional: true,
-				Computed: true,
+				Description: "The user’s language. Defaults to en_US.",
+				Type:        types.StringType,
+				Optional:    true,
+				Computed:    true,
 				Validators: []tfsdk.AttributeValidator{
 					stringInSlice{
 						slice:    picklists.LanguageLocaleKeys,
@@ -85,16 +90,18 @@ func (userType) GetSchema(_ context.Context) (tfsdk.Schema, diag.Diagnostics) {
 				},
 			},
 			"last_name": {
-				Type:     types.StringType,
-				Required: true,
+				Description: "The user’s last name.",
+				Type:        types.StringType,
+				Required:    true,
 				Validators: []tfsdk.AttributeValidator{
 					notEmptyString{},
 				},
 			},
 			"locale_sid_key": {
-				Type:     types.StringType,
-				Optional: true,
-				Computed: true,
+				Description: "The value of the field affects formatting and parsing of values, especially numeric values, in the user interface. It doesn’t affect the API. The field values are named according to the language, and the country if necessary, using two-letter ISO codes. The set of names is based on the ISO standard. You can also manually set a user’s locale in the user interface, and then use that value for inserting or updating other users via the API. Defaults to en_US.",
+				Type:        types.StringType,
+				Optional:    true,
+				Computed:    true,
 				Validators: []tfsdk.AttributeValidator{
 					stringInSlice{
 						slice:    picklists.LocaleSidKeys,
@@ -106,8 +113,9 @@ func (userType) GetSchema(_ context.Context) (tfsdk.Schema, diag.Diagnostics) {
 				},
 			},
 			"profile_id": {
-				Type:     types.StringType,
-				Required: true,
+				Description: "ID of the user’s Profile. Use this value to cache metadata based on profile.",
+				Type:        types.StringType,
+				Required:    true,
 				Validators: []tfsdk.AttributeValidator{
 					notEmptyString{},
 				},
@@ -116,9 +124,10 @@ func (userType) GetSchema(_ context.Context) (tfsdk.Schema, diag.Diagnostics) {
 				},
 			},
 			"time_zone_sid_key": {
-				Type:     types.StringType,
-				Optional: true,
-				Computed: true,
+				Description: "A User time zone affects the offset used when displaying or entering times in the user interface. But the API doesn’t use a User time zone when querying or setting values. Values for this field are named using region and key city, according to ISO standards. You can also manually set one User time zone in the user interface, and then use that value for creating or updating other User records via the API. Defaults to America/New_York.",
+				Type:        types.StringType,
+				Optional:    true,
+				Computed:    true,
 				Validators: []tfsdk.AttributeValidator{
 					stringInSlice{
 						slice:    picklists.TimeZoneSidKeys,
@@ -130,15 +139,17 @@ func (userType) GetSchema(_ context.Context) (tfsdk.Schema, diag.Diagnostics) {
 				},
 			},
 			"username": {
-				Type:     types.StringType,
-				Required: true,
+				Description: "Contains the name that a user enters to log in to the API or the user interface. The value for this field must be in the form of an email address, using all lowercase characters. It must also be unique across all organizations. If you try to create or update a User with a duplicate value for this field, the operation is rejected. Each inserted User also counts as a license. Every organization has a maximum number of licenses. If you attempt to exceed the maximum number of licenses by inserting User records, the create request is rejected.",
+				Type:        types.StringType,
+				Required:    true,
 				Validators: []tfsdk.AttributeValidator{
 					email{},
 				},
 			},
 			"user_role_id": {
-				Type:     types.StringType,
-				Optional: true,
+				Description: "ID of the user’s UserRole.",
+				Type:        types.StringType,
+				Optional:    true,
 				PlanModifiers: tfsdk.AttributePlanModifiers{
 					NormalizeId{},
 				},

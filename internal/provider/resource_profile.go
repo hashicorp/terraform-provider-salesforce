@@ -18,26 +18,30 @@ func (profileType) GetSchema(_ context.Context) (tfsdk.Schema, diag.Diagnostics)
 	return tfsdk.Schema{
 		Attributes: map[string]tfsdk.Attribute{
 			"id": {
-				Type:     types.StringType,
-				Computed: true,
+				Description: "ID of the resource.",
+				Type:        types.StringType,
+				Computed:    true,
 				PlanModifiers: tfsdk.AttributePlanModifiers{
 					staticComputed{},
 				},
 			},
 			"name": {
-				Type:     types.StringType,
-				Required: true,
+				Description: "The name of the profile.",
+				Type:        types.StringType,
+				Required:    true,
 				Validators: []tfsdk.AttributeValidator{
 					notEmptyString{},
 				},
 			},
 			"description": {
-				Type:     types.StringType,
-				Optional: true,
+				Description: "Description of the profile.",
+				Type:        types.StringType,
+				Optional:    true,
 			},
 			"user_license_id": {
-				Type:     types.StringType,
-				Required: true,
+				Description: "ID of the UserLicense associated with this profile. Forces replacement if updated.",
+				Type:        types.StringType,
+				Required:    true,
 				Validators: []tfsdk.AttributeValidator{
 					notEmptyString{},
 				},
@@ -47,8 +51,9 @@ func (profileType) GetSchema(_ context.Context) (tfsdk.Schema, diag.Diagnostics)
 				},
 			},
 			"permissions": {
-				Type:     types.MapType{ElemType: types.BoolType},
-				Optional: true,
+				Description: "Map of permissions for the profile. At this time specific permissions can only be set, the comprehensive list will not be read from Salesforce. The keys should follow Salesforce 'SnakeCase' format however the 'Permissions' prefix should be omitted. Permissions will not import to state due to a technical limitation, you will need to run a subsequent apply if you have permissions set in config during import.",
+				Type:        types.MapType{ElemType: types.BoolType},
+				Optional:    true,
 			},
 		},
 	}, nil
@@ -231,5 +236,5 @@ func (p *profileResource) ImportState(ctx context.Context, req tfsdk.ImportResou
 		return
 	}
 
-	resp.Diagnostics.AddWarning("Profile imported without permissions", "permissions can be explicitly set with the permissions = {} attribute after import, but existing permission settings cannot be imported due to technical limitations.")
+	resp.Diagnostics.AddWarning("Profile imported without permissions", "Permissions can be explicitly set with the permissions = {} attribute after import, but existing permission settings cannot be imported due to technical limitations.")
 }

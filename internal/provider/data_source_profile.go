@@ -18,12 +18,14 @@ func (profileDatasourceType) GetSchema(_ context.Context) (tfsdk.Schema, diag.Di
 	return tfsdk.Schema{
 		Attributes: map[string]tfsdk.Attribute{
 			"id": {
-				Type:     types.StringType,
-				Computed: true,
+				Description: "ID of the resource.",
+				Type:        types.StringType,
+				Computed:    true,
 			},
 			"name": {
-				Type:     types.StringType,
-				Required: true,
+				Description: "The name of the profile.",
+				Type:        types.StringType,
+				Required:    true,
 				Validators: []tfsdk.AttributeValidator{
 					notEmptyString{},
 				},

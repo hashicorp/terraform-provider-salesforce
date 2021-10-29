@@ -16,22 +16,25 @@ func (userRoleType) GetSchema(_ context.Context) (tfsdk.Schema, diag.Diagnostics
 	return tfsdk.Schema{
 		Attributes: map[string]tfsdk.Attribute{
 			"id": {
-				Type:     types.StringType,
-				Computed: true,
+				Description: "ID of the resource.",
+				Type:        types.StringType,
+				Computed:    true,
 				PlanModifiers: tfsdk.AttributePlanModifiers{
 					staticComputed{},
 				},
 			},
 			"name": {
-				Type:     types.StringType,
-				Required: true,
+				Description: "Name of the role. Corresponds to Label on the user interface.",
+				Type:        types.StringType,
+				Required:    true,
 				Validators: []tfsdk.AttributeValidator{
 					notEmptyString{},
 				},
 			},
 			"developer_name": {
-				Type:     types.StringType,
-				Required: true,
+				Description: "The unique name of the object in the API. This name can contain only underscores and alphanumeric characters, and must be unique in your org. It must begin with a letter, not include spaces, not end with an underscore, and not contain two consecutive underscores. In managed packages, this field prevents naming conflicts on package installations. With this field, a developer can change the object’s name in a managed package and the changes are reflected in a subscriber’s organization. Corresponds to Role Name in the user interface.",
+				Type:        types.StringType,
+				Required:    true,
 				Validators: []tfsdk.AttributeValidator{
 					// TODO full validation, see requirements in https://developer.salesforce.com/docs/atlas.en-us.api.meta/api/sforce_api_objects_role.htm
 					/*
@@ -43,8 +46,9 @@ func (userRoleType) GetSchema(_ context.Context) (tfsdk.Schema, diag.Diagnostics
 				},
 			},
 			"parent_role_id": {
-				Type:     types.StringType,
-				Optional: true,
+				Description: "The ID of the parent role.",
+				Type:        types.StringType,
+				Optional:    true,
 				PlanModifiers: tfsdk.AttributePlanModifiers{
 					NormalizeId{},
 					fixNullToUnknown{},

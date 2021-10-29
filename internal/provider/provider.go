@@ -26,25 +26,30 @@ func (p *provider) GetSchema(_ context.Context) (tfsdk.Schema, diag.Diagnostics)
 	return tfsdk.Schema{
 		Attributes: map[string]tfsdk.Attribute{
 			"client_id": {
-				Type:     types.StringType,
-				Optional: true,
+				Description: "Client ID of the connected app. Corresponds to Consumer Key in the user interface. Can be specified with the environment variable SALESFORCE_CLIENT_ID.",
+				Type:        types.StringType,
+				Optional:    true,
 			},
 			"private_key": {
-				Type:      types.StringType,
-				Optional:  true,
-				Sensitive: true,
+				Description: "Private Key associated to the public certificate that was uploaded to the connected app. This may point to a file location or be set directly. This should not be confused with the Consumer Secret in the user interface. Can be specified with the environment variable SALESFORCE_PRIVATE_KEY.",
+				Type:        types.StringType,
+				Optional:    true,
+				Sensitive:   true,
 			},
 			"api_version": {
-				Type:     types.StringType,
-				Optional: true,
+				Description: "API version of the salesforce org in the format in the format: vMAJOR.MINOR. The provider requires at least version v53.0. Can be specified with the environment variable SALESFORCE_API_VERSION.",
+				Type:        types.StringType,
+				Optional:    true,
 			},
 			"username": {
-				Type:     types.StringType,
-				Optional: true,
+				Description: "Salesforce Username of a System Administrator like user for the provider to authenticate as. Can be specified with the environment variable SALESFORCE_USERNAME.",
+				Type:        types.StringType,
+				Optional:    true,
 			},
 			"is_sandbox_org": {
-				Type:     types.BoolType,
-				Optional: true,
+				Description: "Indicates if the salesforce org is a sandbox org or a developer/production org. Ensures the provider attempts to authenticate with the correct server. Can be specified with the environment variable SALESFORCE_IS_SANDBOX_ORG.",
+				Type:        types.BoolType,
+				Optional:    true,
 			},
 		},
 	}, nil

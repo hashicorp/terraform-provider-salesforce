@@ -30,15 +30,15 @@ resource "salesforce_user_role" "child" {
 
 ### Required
 
-- **developer_name** (String)
-- **name** (String)
+- **developer_name** (String) The unique name of the object in the API. This name can contain only underscores and alphanumeric characters, and must be unique in your org. It must begin with a letter, not include spaces, not end with an underscore, and not contain two consecutive underscores. In managed packages, this field prevents naming conflicts on package installations. With this field, a developer can change the object’s name in a managed package and the changes are reflected in a subscriber’s organization. Corresponds to Role Name in the user interface.
+- **name** (String) Name of the role. Corresponds to Label on the user interface.
 
 ### Optional
 
-- **parent_role_id** (String)
+- **parent_role_id** (String) The ID of the parent role.
 
 ### Read-Only
 
-- **id** (String) The ID of this resource.
+- **id** (String) ID of the resource.
 
 

@@ -19,12 +19,14 @@ func (userLicenseDatasourceType) GetSchema(_ context.Context) (tfsdk.Schema, dia
 	return tfsdk.Schema{
 		Attributes: map[string]tfsdk.Attribute{
 			"id": {
-				Type:     types.StringType,
-				Computed: true,
+				Description: "ID of the resource.",
+				Type:        types.StringType,
+				Computed:    true,
 			},
 			"license_definition_key": {
-				Type:     types.StringType,
-				Required: true,
+				Description: "A string that uniquely identifies a particular user license. Valid options vary depending on organization type and configuration. For a complete list see https://developer.salesforce.com/docs/atlas.en-us.api.meta/api/sforce_api_objects_userlicense.htm",
+				Type:        types.StringType,
+				Required:    true,
 				Validators: []tfsdk.AttributeValidator{
 					stringInSlice{slice: picklists.LicenseDefinitionKeys},
 				},

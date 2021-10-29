@@ -26,8 +26,8 @@ provider "googleworkspace" {
 
 ### Optional
 
-- **api_version** (String)
-- **client_id** (String)
-- **is_sandbox_org** (Boolean)
-- **private_key** (String, Sensitive)
-- **username** (String)
+- **api_version** (String) API version of the salesforce org in the format in the format: vMAJOR.MINOR. The provider requires at least version v53.0. Can be specified with the environment variable SALESFORCE_API_VERSION.
+- **client_id** (String) Client ID of the connected app. Corresponds to Consumer Key in the user interface. Can be specified with the environment variable SALESFORCE_CLIENT_ID.
+- **is_sandbox_org** (Boolean) Indicates if the salesforce org is a sandbox org or a developer/production org. Ensures the provider attempts to authenticate with the correct server. Can be specified with the environment variable SALESFORCE_IS_SANDBOX_ORG.
+- **private_key** (String, Sensitive) Private Key associated to the public certificate that was uploaded to the connected app. This may point to a file location or be set directly. This should not be confused with the Consumer Secret in the user interface. Can be specified with the environment variable SALESFORCE_PRIVATE_KEY.
+- **username** (String) Salesforce Username of a System Administrator like user for the provider to authenticate as. Can be specified with the environment variable SALESFORCE_USERNAME.
