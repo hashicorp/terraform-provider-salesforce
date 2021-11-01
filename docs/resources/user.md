@@ -17,12 +17,18 @@ data "salesforce_profile" "chatter_free" {
   name = "Chatter Free User"
 }
 
+resource "salesforce_user_role" "ceo" {
+  name           = "ceo"
+  developer_name = "ceo"
+}
+
 resource "salesforce_user" "example" {
   alias               = "example"
   email               = "user@example.com"
   last_name           = "example"
   username            = "user@example.com"
   profile_id          = data.salesforce_profile.chatter_free.id
+  user_role_id        = salesforce_user_role.ceo.id
   email_encoding_key  = "UTF-8"
   language_locale_key = "en_US"
   time_zone_sid_key   = "America/Chicago"
@@ -53,4 +59,10 @@ resource "salesforce_user" "example" {
 
 - **id** (String) ID of the resource.
 
+## Import
 
+Import is supported using the following syntax:
+
+```shell
+terraform import salesforce_user.example 00AB0000000abc1AAA
+```

@@ -41,4 +41,10 @@ resource "salesforce_user_role" "child" {
 
 - **id** (String) ID of the resource.
 
+## Import
 
+Import is supported using the following syntax:
+
+```shell
+terraform import salesforce_user_role.example 00AB0000000abc1AAA
+```

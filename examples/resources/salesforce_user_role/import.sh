@@ -1,0 +1,1 @@
+terraform import salesforce_user_role.example 00AB0000000abc1AAA
