@@ -19,6 +19,10 @@ This provider plugin is maintained by the Terraform team at [HashiCorp](https://
 -	[Terraform](https://www.terraform.io/downloads.html) >= 1.0.3
 -	[Go](https://golang.org/doc/install) >= 1.16
 
+## Setup
+
+The provider interacts with the Salesforce REST API via a "connected app". Follow the steps from this [blog post](https://mannharleen.github.io/2020-03-03-salesforce-jwt/) to obtain values for configuring a provider, see the [Provider Configuration Reference](https://registry.terraform.io/providers/hashicorp/salesforce/latest/docs) for full detals.
+
 ## Upgrading the provider
 
 The Salesforce provider doesn't upgrade automatically once you've started using it. After a new release you can run
