@@ -1,5 +1,5 @@
 provider "salesforce" {
-  cliend_id      = "ABCDEFG"
+  client_id      = "ABCDEFG"
   private_key    = "/Users/mscott/priv.pem"
   api_version    = "v53.0"
   username       = "user@example.com"

@@ -23,7 +23,7 @@ SALESFORCE_API_VERSION
 SALESFORCE_USERNAME
 ```
 
-If running tests or the provider against a "Sandbox Org" please be sure to set
+If running tests or using the provider against a "Sandbox Org" please be sure to set
 
 ```
 SALESFORCE_IS_SANDBOX_ORG
