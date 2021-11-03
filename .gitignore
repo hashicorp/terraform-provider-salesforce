@@ -34,7 +34,7 @@ website/vendor
 !command/test-fixtures/**/.terraform/
 
 # Template exclusions
-!templates/
+!templates/**/*
 
 # Keep windows files with windows line endings
 *.winfile eol=crlf
