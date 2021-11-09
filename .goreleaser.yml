@@ -26,10 +26,8 @@ builds:
       - goos: freebsd
         goarch: arm64
     ldflags:
-      - -s -w -X version.Version={{.Version}}
+      - -s -w -X internal/provider.Version={{.Version}}
     mod_timestamp: '{{ .CommitTimestamp }}'
-changelog:
-  skip: true
 checksum:
   name_template: '{{ .ProjectName }}_{{ .Version }}_SHA256SUMS'
   algorithm: sha256
@@ -39,13 +37,26 @@ publishers:
     signature: true
     cmd: hc-releases upload-file -header="x-terraform-protocol-version={{ .Env.PROTOCOL_VERSION }}" -header="x-terraform-protocol-versions={{ .Env.PROTOCOL_VERSIONS }}" {{ abs .ArtifactPath }}
     env:
+      - AWS_DEFAULT_REGION={{ .Env.AWS_DEFAULT_REGION }}
+      - AWS_REGION={{ .Env.AWS_REGION }}
       - AWS_ACCESS_KEY_ID={{ .Env.AWS_ACCESS_KEY_ID }}
       - AWS_SECRET_ACCESS_KEY={{ .Env.AWS_SECRET_ACCESS_KEY }}
+      - AWS_SESSION_TOKEN={{ .Env.AWS_SESSION_TOKEN }}
 release:
   ids:
     - none
 signs:
-  - args: ["-u", "{{ .Env.GPG_USER_ID }}", "--output", "${signature}", "--detach-sign", "${artifact}"]
+  - signature: ${artifact}.72D7468F.sig
+    cmd: sh
+    args:
+    - -c
+    - >-
+      signore
+      sign
+      --dearmor
+      --file ${artifact}
+      --signer {{ .Env.SIGNER }}
+      --out ${signature}
     artifacts: checksum
 snapshot:
   name_template: "{{ .Tag }}-next"
