@@ -16,6 +16,7 @@ type profileDatasourceType struct {
 
 func (profileDatasourceType) GetSchema(_ context.Context) (tfsdk.Schema, diag.Diagnostics) {
 	return tfsdk.Schema{
+		Description: "Profile Data Source for the Salesforce Provider",
 		Attributes: map[string]tfsdk.Attribute{
 			"id": {
 				Description: "ID of the resource.",

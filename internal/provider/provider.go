@@ -24,6 +24,7 @@ type provider struct {
 
 func (p *provider) GetSchema(_ context.Context) (tfsdk.Schema, diag.Diagnostics) {
 	return tfsdk.Schema{
+		Description: "A Provider for managing a Salesforce Organization",
 		Attributes: map[string]tfsdk.Attribute{
 			"client_id": {
 				Description: "Client ID of the connected app. Corresponds to Consumer Key in the user interface. Can be specified with the environment variable SALESFORCE_CLIENT_ID.",

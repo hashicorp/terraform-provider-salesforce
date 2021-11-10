@@ -36,6 +36,7 @@ type userType struct {
 
 func (userType) GetSchema(_ context.Context) (tfsdk.Schema, diag.Diagnostics) {
 	return tfsdk.Schema{
+		Description: "User Resource for the Salesforce Provider",
 		Attributes: map[string]tfsdk.Attribute{
 			"id": {
 				Description: "ID of the resource.",

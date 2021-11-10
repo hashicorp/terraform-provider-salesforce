@@ -3,12 +3,12 @@
 page_title: "salesforce_user Resource - terraform-provider-salesforce"
 subcategory: ""
 description: |-
-  
+  User Resource for the Salesforce Provider
 ---
 
 # salesforce_user (Resource)
 
-
+User Resource for the Salesforce Provider
 
 ## Example Usage
 

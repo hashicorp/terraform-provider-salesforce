@@ -3,12 +3,12 @@
 page_title: "salesforce_profile Resource - terraform-provider-salesforce"
 subcategory: ""
 description: |-
-  
+  Profile Resource for the Salesforce Provider
 ---
 
 # salesforce_profile (Resource)
 
-
+Profile Resource for the Salesforce Provider
 
 ## Example Usage
 

@@ -17,6 +17,7 @@ type userLicenseDatasourceType struct {
 
 func (userLicenseDatasourceType) GetSchema(_ context.Context) (tfsdk.Schema, diag.Diagnostics) {
 	return tfsdk.Schema{
+		Description: "User License Data Source for the Salesforce Provider",
 		Attributes: map[string]tfsdk.Attribute{
 			"id": {
 				Description: "ID of the resource.",

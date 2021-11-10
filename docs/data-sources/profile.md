@@ -3,12 +3,12 @@
 page_title: "salesforce_profile Data Source - terraform-provider-salesforce"
 subcategory: ""
 description: |-
-  
+  Profile Data Source for the Salesforce Provider
 ---
 
 # salesforce_profile (Data Source)
 
-
+Profile Data Source for the Salesforce Provider
 
 ## Example Usage
 
