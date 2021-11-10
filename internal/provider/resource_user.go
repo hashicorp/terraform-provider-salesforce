@@ -2,6 +2,8 @@ package provider
 
 import (
 	"context"
+	"fmt"
+	"strings"
 
 	"github.com/hashicorp/terraform-plugin-framework/attr"
 	"github.com/hashicorp/terraform-plugin-framework/diag"
@@ -163,6 +165,15 @@ func (userType) GetSchema(_ context.Context) (tfsdk.Schema, diag.Diagnostics) {
 					fixNullToUnknown{},
 				},
 			},
+			"reset_password": {
+				Description: "Reset password and send an email to the user. No reset is performed if this field is omitted, is false, or was true and remained true on subsequent apply. Please set to false and then true in subsequent applies, or have it set to true on create to trigger the reset.",
+				Type:        types.BoolType,
+				Optional:    true,
+				Computed:    true,
+				PlanModifiers: tfsdk.AttributePlanModifiers{
+					booleanNilIsFalse{},
+				},
+			},
 		},
 	}, nil
 }
@@ -182,6 +193,58 @@ func (u userType) NewResource(_ context.Context, p tfsdk.Provider) (tfsdk.Resour
 
 type userResource struct {
 	Resource
+}
+
+func (u *userResource) resetPassword(id string) error {
+	meta, err := u.Client.DescribeSObjects()
+	if err != nil {
+		return err
+	}
+	uri := strings.Replace(meta["User"].URLs["rowTemplate"], "{ID}", id, 1) + "/password"
+
+	return u.Client.Delete(uri, nil)
+}
+
+func (u *userResource) Create(ctx context.Context, req tfsdk.CreateResourceRequest, resp *tfsdk.CreateResourceResponse) {
+	u.Resource.Create(ctx, req, resp)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+	var data userResourceData
+	if diags := resp.State.Get(ctx, &data); diags.HasError() {
+		resp.Diagnostics = diags
+		return
+	}
+	if data.ResetPassword {
+		if err := u.resetPassword(data.Id.Value); err != nil {
+			resp.AddWarning("Error Resetting Password", fmt.Sprintf("The user %s was succesfully created but the reset password request failed: %s", data.Username, err))
+		}
+	} else {
+		resp.AddWarning("No Password For User", fmt.Sprintf("The user %s was succesfully created but no set password email has been sent, if that is needed please set reset_password = true and apply.", data.Username))
+	}
+}
+
+func (u *userResource) Update(ctx context.Context, req tfsdk.UpdateResourceRequest, resp *tfsdk.UpdateResourceResponse) {
+	u.Resource.Update(ctx, req, resp)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+	var stateBeforeUpdate userResourceData
+	if diags := req.State.Get(ctx, &stateBeforeUpdate); diags.HasError() {
+		resp.Diagnostics = diags
+		return
+	}
+	var stateAfterUpdate userResourceData
+	if diags := resp.State.Get(ctx, &stateAfterUpdate); diags.HasError() {
+		resp.Diagnostics = diags
+		return
+	}
+	// only trigger password reset when going from false -> true
+	if !stateBeforeUpdate.ResetPassword && stateAfterUpdate.ResetPassword {
+		if err := u.resetPassword(stateAfterUpdate.Id.Value); err != nil {
+			resp.AddWarning("Error Resetting Password", fmt.Sprintf("The user %s was succesfully updated but the reset password request failed: %s", stateAfterUpdate.Username, err))
+		}
+	}
 }
 
 func (u *userResource) Delete(ctx context.Context, req tfsdk.DeleteResourceRequest, resp *tfsdk.DeleteResourceResponse) {
@@ -217,6 +280,7 @@ type userResourceData struct {
 	TimeZoneSidKey    string       `tfsdk:"time_zone_sid_key" force:",omitempty"`
 	Username          string       `tfsdk:"username" force:",omitempty"`
 	UserRoleId        *string      `tfsdk:"user_role_id"`
+	ResetPassword     bool         `tfsdk:"reset_password" force:"-"`
 	IsActive          *bool        `tfsdk:"-" force:",omitempty"`
 	Id                types.String `tfsdk:"id" force:"-"`
 }
