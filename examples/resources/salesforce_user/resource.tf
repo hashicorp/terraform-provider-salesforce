@@ -18,4 +18,5 @@ resource "salesforce_user" "example" {
   language_locale_key = "en_US"
   time_zone_sid_key   = "America/Chicago"
   locale_sid_key      = "en_US"
+  reset_password      = true
 }
