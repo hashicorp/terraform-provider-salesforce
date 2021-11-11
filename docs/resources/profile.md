@@ -3,12 +3,12 @@
 page_title: "salesforce_profile Resource - terraform-provider-salesforce"
 subcategory: ""
 description: |-
-  Profile Resource for the Salesforce Provider
+  Profile Resource for the Salesforce Provider. Please note that Users must have a Profile assigned to them, Profiles cannot be deleted if a User is assigned to it, and Salesforce does not allow the deletion of Users, only deactivation. Terraform will warn after destroy of a User that it has only been deactivated and now removed from state. A common issue with this pattern is a Profile and User created in tandem will fail to delete the Profile on destroy due to the lingering assignment. Should you wish to destroy a created Profile, it's advised that an apply that moves all affected Users to a static Profile be run first, after which the Profile can be safely destroyed.
 ---
 
 # salesforce_profile (Resource)
 
-Profile Resource for the Salesforce Provider
+Profile Resource for the Salesforce Provider. Please note that Users must have a Profile assigned to them, Profiles cannot be deleted if a User is assigned to it, and Salesforce does not allow the deletion of Users, only deactivation. Terraform will warn after destroy of a User that it has only been deactivated and now removed from state. A common issue with this pattern is a Profile and User created in tandem will fail to delete the Profile on destroy due to the lingering assignment. Should you wish to destroy a created Profile, it's advised that an apply that moves all affected Users to a static Profile be run first, after which the Profile can be safely destroyed.
 
 ## Example Usage
 
