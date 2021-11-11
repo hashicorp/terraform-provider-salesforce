@@ -122,8 +122,11 @@ func (p profileMap) ToStateData(includePermissions ...string) profileResourceDat
 		Name:          p["Name"].(string),
 		UserLicenseId: p["UserLicenseId"].(string),
 	}
-	desc := p["Description"].(string)
-	data.Description = &desc
+	desc, ok := p["Description"]
+	if ok && desc != nil {
+		descStr := desc.(string)
+		data.Description = &descStr
+	}
 	// expand permissions
 	permissions := make(map[string]attr.Value, len(includePermissions))
 	for _, k := range includePermissions {
