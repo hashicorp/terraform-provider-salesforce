@@ -3,12 +3,12 @@
 page_title: "salesforce_user_license Data Source - terraform-provider-salesforce"
 subcategory: ""
 description: |-
-  
+  User License Data Source for the Salesforce Provider
 ---
 
 # salesforce_user_license (Data Source)
 
-
+User License Data Source for the Salesforce Provider
 
 ## Example Usage
 

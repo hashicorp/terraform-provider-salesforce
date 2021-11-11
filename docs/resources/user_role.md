@@ -3,12 +3,12 @@
 page_title: "salesforce_user_role Resource - terraform-provider-salesforce"
 subcategory: ""
 description: |-
-  
+  User Role Resource for the Salesforce Provider
 ---
 
 # salesforce_user_role (Resource)
 
-
+User Role Resource for the Salesforce Provider
 
 ## Example Usage
 

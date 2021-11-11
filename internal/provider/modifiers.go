@@ -91,3 +91,14 @@ func (fixNullToUnknown) Modify(_ context.Context, req tfsdk.ModifyAttributePlanR
 		resp.AttributePlan = config
 	}
 }
+
+type booleanNilIsFalse struct {
+	emptyDescriptions
+}
+
+func (booleanNilIsFalse) Modify(_ context.Context, req tfsdk.ModifyAttributePlanRequest, resp *tfsdk.ModifyAttributePlanResponse) {
+	resp.AttributePlan = req.AttributePlan
+	if req.AttributeConfig.(types.Bool).Null {
+		resp.AttributePlan = types.Bool{Value: false}
+	}
+}
