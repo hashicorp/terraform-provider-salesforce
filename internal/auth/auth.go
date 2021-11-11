@@ -11,6 +11,7 @@ import (
 	"time"
 
 	"github.com/dgrijalva/jwt-go"
+	"github.com/mitchellh/go-homedir"
 	"github.com/nimajalali/go-force/force"
 )
 
@@ -99,13 +100,21 @@ type Config struct {
 }
 
 func Client(config Config) (*force.ForceApi, error) {
+	var privateKeyBytes []byte
 	// try to read private key as file
-	privateKeyBytes, err := ioutil.ReadFile(config.PrivateKey)
-	if os.IsNotExist(err) {
-		// assume private key was passed directly
+	path, err := homedir.Expand(config.PrivateKey)
+	if err != nil {
+		// don't expand then..
+		path = config.PrivateKey
+	}
+	if _, err := os.Stat(path); err == nil {
+		privateKeyBytes, err = ioutil.ReadFile(path)
+		if err != nil {
+			return nil, err
+		}
+	} else {
+		// if there is any os.Stat error assume the key was passed directly
 		privateKeyBytes = []byte(config.PrivateKey)
-	} else if err != nil {
-		return nil, err
 	}
 
 	loginDomain := productionSalesforceLoginServer
