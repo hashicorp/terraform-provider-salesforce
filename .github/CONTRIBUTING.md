@@ -26,10 +26,8 @@ SALESFORCE_USERNAME
 If running tests or using the provider against a "Sandbox Org" please be sure to set
 
 ```
-SALESFORCE_IS_SANDBOX_ORG
+SALESFORCE_LOGIN_URL="https://test.salesforce.com"
 ```
-
-To a [Golang truthy value](https://pkg.go.dev/strconv#ParseBool)
 
 The tests and provider assume the profile of the specified `SALESFORCE_USERNAME` has "System Administrator" permissions.
 

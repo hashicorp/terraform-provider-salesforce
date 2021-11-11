@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 	"os"
-	"strconv"
 
 	"github.com/hashicorp/terraform-plugin-framework/diag"
 	"github.com/hashicorp/terraform-plugin-framework/tfsdk"
@@ -38,7 +37,7 @@ func (p *provider) GetSchema(_ context.Context) (tfsdk.Schema, diag.Diagnostics)
 				Sensitive:   true,
 			},
 			"api_version": {
-				Description: "API version of the salesforce org in the format in the format: vMAJOR.MINOR. The provider requires at least version v53.0. Can be specified with the environment variable SALESFORCE_API_VERSION.",
+				Description: "API version of the salesforce org in the format in the format: MAJOR.MINOR (please omit any leading 'v'). The provider requires at least version 53.0. Can be specified with the environment variable SALESFORCE_API_VERSION.",
 				Type:        types.StringType,
 				Optional:    true,
 			},
@@ -47,9 +46,9 @@ func (p *provider) GetSchema(_ context.Context) (tfsdk.Schema, diag.Diagnostics)
 				Type:        types.StringType,
 				Optional:    true,
 			},
-			"is_sandbox_org": {
-				Description: "Indicates if the salesforce org is a sandbox org or a developer/production org. Ensures the provider attempts to authenticate with the correct server. Can be specified with the environment variable SALESFORCE_IS_SANDBOX_ORG.",
-				Type:        types.BoolType,
+			"login_url": {
+				Description: "Directs the authentication request, defaults to the production endpoint https://login.salesforce.com, should be set to https://test.salesforce.com for sandbox organizations. Can be specified with the environment variable SALESFORCE_LOGIN_URL.",
+				Type:        types.StringType,
 				Optional:    true,
 			},
 		},
@@ -61,7 +60,7 @@ type providerData struct {
 	PrivateKey types.String `tfsdk:"private_key"`
 	ApiVersion types.String `tfsdk:"api_version"`
 	Username   types.String `tfsdk:"username"`
-	Sandbox    types.Bool   `tfsdk:"is_sandbox_org"`
+	LoginUrl   types.String `tfsdk:"login_url"`
 }
 
 func (p *provider) Configure(ctx context.Context, req tfsdk.ConfigureProviderRequest, resp *tfsdk.ConfigureProviderResponse) {
@@ -88,8 +87,8 @@ func (p *provider) Configure(ctx context.Context, req tfsdk.ConfigureProviderReq
 		addCannotInterpolateInProviderBlockError(resp, "username")
 		return
 	}
-	if config.Sandbox.Unknown {
-		addCannotInterpolateInProviderBlockError(resp, "is_sandbox_org")
+	if config.LoginUrl.Unknown {
+		addCannotInterpolateInProviderBlockError(resp, "login_url")
 		return
 	}
 
@@ -106,19 +105,8 @@ func (p *provider) Configure(ctx context.Context, req tfsdk.ConfigureProviderReq
 	if config.Username.Null {
 		config.Username.Value = os.Getenv("SALESFORCE_USERNAME")
 	}
-	if config.Sandbox.Null {
-		if isSandboxStr := os.Getenv("SALESFORCE_IS_SANDBOX_ORG"); isSandboxStr != "" {
-			isSandbox, err := strconv.ParseBool(isSandboxStr)
-			if err != nil {
-				resp.Diagnostics.AddAttributeError(
-					tftypes.NewAttributePath().WithAttributeName("is_sandbox_org"),
-					"Invalid provider config",
-					err.Error(),
-				)
-				return
-			}
-			config.Sandbox.Value = isSandbox
-		}
+	if config.LoginUrl.Null {
+		config.LoginUrl.Value = os.Getenv("SALESFORCE_LOGIN_URL")
 	}
 
 	// required if still unset
@@ -143,7 +131,7 @@ func (p *provider) Configure(ctx context.Context, req tfsdk.ConfigureProviderReq
 		Username:   config.Username.Value,
 		ClientId:   config.ClientId.Value,
 		PrivateKey: config.PrivateKey.Value,
-		Sandbox:    config.Sandbox.Value,
+		LoginUrl:   config.LoginUrl.Value,
 	})
 	if err != nil {
 		resp.Diagnostics.AddError("Error creating salesforce client", err.Error())
