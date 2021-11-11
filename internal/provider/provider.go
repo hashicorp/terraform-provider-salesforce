@@ -38,7 +38,7 @@ func (p *provider) GetSchema(_ context.Context) (tfsdk.Schema, diag.Diagnostics)
 				Sensitive:   true,
 			},
 			"api_version": {
-				Description: "API version of the salesforce org in the format in the format: vMAJOR.MINOR. The provider requires at least version v53.0. Can be specified with the environment variable SALESFORCE_API_VERSION.",
+				Description: "API version of the salesforce org in the format in the format: MAJOR.MINOR (please omit any leading 'v'). The provider requires at least version 53.0. Can be specified with the environment variable SALESFORCE_API_VERSION.",
 				Type:        types.StringType,
 				Optional:    true,
 			},

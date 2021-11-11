@@ -75,7 +75,7 @@ jobs:
       env:
         TF_ACC: "1"
         TF_ACC_TERRAFORM_VERSION: ${{ matrix.terraform }}
-        SALESFORCE_API_VERSION: "v53.0"
+        SALESFORCE_API_VERSION: "53.0"
         SALESFORCE_IS_SANDBOX_ORG: "1"
         SALESFORCE_CLIENT_ID: ${{ secrets.SALESFORCE_CLIENT_ID }}
         SALESFORCE_PRIVATE_KEY: ${{ secrets.SALESFORCE_PRIVATE_KEY }}

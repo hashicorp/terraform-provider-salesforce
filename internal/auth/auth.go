@@ -132,5 +132,9 @@ func Client(config Config) (*force.ForceApi, error) {
 		return nil, err
 	}
 
-	return force.CreateWithAccessToken(config.ApiVersion, config.ClientId, resp.AccessToken, resp.InstanceUrl)
+	apiVersion := config.ApiVersion
+	if !strings.HasPrefix(apiVersion, "v") {
+		apiVersion = "v" + apiVersion
+	}
+	return force.CreateWithAccessToken(apiVersion, config.ClientId, resp.AccessToken, resp.InstanceUrl)
 }
