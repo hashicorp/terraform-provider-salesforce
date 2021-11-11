@@ -96,7 +96,7 @@ type Config struct {
 	PrivateKey string
 	ApiVersion string
 	Username   string
-	Sandbox    bool
+	LoginUrl   string
 }
 
 func Client(config Config) (*force.ForceApi, error) {
@@ -117,17 +117,17 @@ func Client(config Config) (*force.ForceApi, error) {
 		privateKeyBytes = []byte(config.PrivateKey)
 	}
 
-	loginDomain := productionSalesforceLoginServer
-	if config.Sandbox {
-		loginDomain = sandboxSalesforceLoginServer
+	if config.LoginUrl == "" {
+		config.LoginUrl = productionSalesforceLoginServer
 	}
+	config.LoginUrl = strings.TrimSuffix(config.LoginUrl, "/")
 
-	signedJwt, err := SignJWT(privateKeyBytes, config.Username, config.ClientId, loginDomain)
+	signedJwt, err := SignJWT(privateKeyBytes, config.Username, config.ClientId, config.LoginUrl)
 	if err != nil {
 		return nil, err
 	}
 
-	resp, err := Authenticate(loginDomain, signedJwt)
+	resp, err := Authenticate(config.LoginUrl, signedJwt)
 	if err != nil {
 		return nil, err
 	}
