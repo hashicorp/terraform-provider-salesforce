@@ -10,6 +10,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-go/tftypes"
 )
 
+// This type ended up not being used, keeping it around though to demonstrate how to extend framework types
 type BoolMarshalerType struct{}
 
 func (BoolMarshalerType) TerraformType(context.Context) tftypes.Type {
