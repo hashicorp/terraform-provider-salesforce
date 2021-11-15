@@ -1,6 +1,6 @@
 # Terraform Provider Salesforce
 <a href="https://terraform.io">
-    <img src="https://cdn.rawgit.com/hashicorp/terraform-website/master/content/source/assets/images/logo-hashicorp.svg" alt="Terraform logo" align="right" height="50" />
+    <img src="https://github.com/hashicorp/terraform-website/tree/master/content/source/assets/images/logo-hashicorp.svg" alt="Terraform logo" align="right" height="50" />
 </a>
 
 ![Status: Tech Preview](https://img.shields.io/badge/status-experimental-EAAA32) [![Releases](https://img.shields.io/github/release/hashicorp/terraform-provider-salesforce.svg)](https://github.com/hashicorp/terraform-provider-salesforce/releases)
