@@ -6,7 +6,7 @@ require (
 	github.com/golang-jwt/jwt/v4 v4.3.0
 	github.com/hashicorp/hcl/v2 v2.8.2 // indirect
 	github.com/hashicorp/terraform-plugin-docs v0.5.1
-	github.com/hashicorp/terraform-plugin-framework v0.4.2
+	github.com/hashicorp/terraform-plugin-framework v0.5.0
 	github.com/hashicorp/terraform-plugin-go v0.6.0
 	github.com/hashicorp/terraform-plugin-sdk/v2 v2.10.1
 	github.com/mitchellh/go-homedir v1.1.0

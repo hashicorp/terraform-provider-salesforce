@@ -218,10 +218,10 @@ func (u *userResource) Create(ctx context.Context, req tfsdk.CreateResourceReque
 	}
 	if data.ResetPassword {
 		if err := u.resetPassword(data.Id.Value); err != nil {
-			resp.AddWarning("Error Resetting Password", fmt.Sprintf("The user %s was succesfully created but the reset password request failed: %s", data.Username, err))
+			resp.Diagnostics.AddWarning("Error Resetting Password", fmt.Sprintf("The user %s was succesfully created but the reset password request failed: %s", data.Username, err))
 		}
 	} else {
-		resp.AddWarning("No Password For User", fmt.Sprintf("The user %s was succesfully created but no set password email has been sent, if that is needed please set reset_password = true and apply.", data.Username))
+		resp.Diagnostics.AddWarning("No Password For User", fmt.Sprintf("The user %s was succesfully created but no set password email has been sent, if that is needed please set reset_password = true and apply.", data.Username))
 	}
 }
 
@@ -243,20 +243,20 @@ func (u *userResource) Update(ctx context.Context, req tfsdk.UpdateResourceReque
 	// only trigger password reset when going from false -> true
 	if !stateBeforeUpdate.ResetPassword && stateAfterUpdate.ResetPassword {
 		if err := u.resetPassword(stateAfterUpdate.Id.Value); err != nil {
-			resp.AddWarning("Error Resetting Password", fmt.Sprintf("The user %s was succesfully updated but the reset password request failed: %s", stateAfterUpdate.Username, err))
+			resp.Diagnostics.AddWarning("Error Resetting Password", fmt.Sprintf("The user %s was succesfully updated but the reset password request failed: %s", stateAfterUpdate.Username, err))
 		}
 	}
 }
 
 func (u *userResource) Delete(ctx context.Context, req tfsdk.DeleteResourceRequest, resp *tfsdk.DeleteResourceResponse) {
-	id, diags := req.State.GetAttribute(ctx, tftypes.NewAttributePath().WithAttributeName("id"))
-	if diags.HasError() {
+	var id string
+	if diags := req.State.GetAttribute(ctx, tftypes.NewAttributePath().WithAttributeName("id"), &id); diags.HasError() {
 		resp.Diagnostics = diags
 		return
 	}
 
 	isActive := false
-	err := u.Client.UpdateSObject(id.(types.String).Value, userResourceData{IsActive: &isActive})
+	err := u.Client.UpdateSObject(id, userResourceData{IsActive: &isActive})
 	if err != nil {
 		if isNotFoundError(err) {
 			resp.State.RemoveResource(ctx)
