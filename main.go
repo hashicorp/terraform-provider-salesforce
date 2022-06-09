@@ -3,7 +3,7 @@ package main
 import (
 	"context"
 
-	"github.com/hashicorp/terraform-plugin-framework/tfsdk"
+	"github.com/hashicorp/terraform-plugin-framework/providerserver"
 	"github.com/hashicorp/terraform-provider-salesforce/internal/provider"
 )
 
@@ -27,7 +27,7 @@ var (
 )
 
 func main() {
-	tfsdk.Serve(context.Background(), provider.New, tfsdk.ServeOpts{
-		Name: "registry.terraform.io/hashicorp/salesforce",
+	providerserver.Serve(context.Background(), provider.New, providerserver.ServeOpts{
+		Address: "registry.terraform.io/hashicorp/salesforce",
 	})
 }
