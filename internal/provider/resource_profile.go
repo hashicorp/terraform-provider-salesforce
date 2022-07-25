@@ -139,9 +139,8 @@ func (p profileMap) ToStateData(includePermissions ...string) profileResourceDat
 			permissions[trimmedKey] = types.Bool{Unknown: true}
 		}
 	}
-	if len(permissions) > 0 {
-		data.Permissions = types.Map{ElemType: types.BoolType, Elems: permissions}
-	}
+	data.Permissions = types.Map{ElemType: types.BoolType, Elems: permissions}
+
 	return data
 }
 
