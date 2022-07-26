@@ -42,24 +42,24 @@ resource "salesforce_user" "example" {
 
 ### Required
 
-- **alias** (String) The user’s alias. For example, jsmith.
-- **email** (String) The user’s email address.
-- **last_name** (String) The user’s last name.
-- **profile_id** (String) ID of the user’s Profile. Use this value to cache metadata based on profile.
-- **username** (String) Contains the name that a user enters to log in to the API or the user interface. The value for this field must be in the form of an email address, using all lowercase characters. It must also be unique across all organizations. If you try to create or update a User with a duplicate value for this field, the operation is rejected. Each inserted User also counts as a license. Every organization has a maximum number of licenses. If you attempt to exceed the maximum number of licenses by inserting User records, the create request is rejected.
+- `alias` (String) The user’s alias. For example, jsmith.
+- `email` (String) The user’s email address.
+- `last_name` (String) The user’s last name.
+- `profile_id` (String) ID of the user’s Profile. Use this value to cache metadata based on profile.
+- `username` (String) Contains the name that a user enters to log in to the API or the user interface. The value for this field must be in the form of an email address, using all lowercase characters. It must also be unique across all organizations. If you try to create or update a User with a duplicate value for this field, the operation is rejected. Each inserted User also counts as a license. Every organization has a maximum number of licenses. If you attempt to exceed the maximum number of licenses by inserting User records, the create request is rejected.
 
 ### Optional
 
-- **email_encoding_key** (String) The email encoding for the user, such as ISO-8859-1 or UTF-8. Defaults to UTF-8.
-- **language_locale_key** (String) The user’s language. Defaults to en_US.
-- **locale_sid_key** (String) The value of the field affects formatting and parsing of values, especially numeric values, in the user interface. It doesn’t affect the API. The field values are named according to the language, and the country if necessary, using two-letter ISO codes. The set of names is based on the ISO standard. You can also manually set a user’s locale in the user interface, and then use that value for inserting or updating other users via the API. Defaults to en_US.
-- **reset_password** (Boolean) Reset password and send an email to the user. No reset is performed if this field is omitted, is false, or was true and remained true on subsequent apply. Please set to false and then true in subsequent applies, or have it set to true on create to trigger the reset.
-- **time_zone_sid_key** (String) A User time zone affects the offset used when displaying or entering times in the user interface. But the API doesn’t use a User time zone when querying or setting values. Values for this field are named using region and key city, according to ISO standards. You can also manually set one User time zone in the user interface, and then use that value for creating or updating other User records via the API. Defaults to America/New_York.
-- **user_role_id** (String) ID of the user’s UserRole.
+- `email_encoding_key` (String) The email encoding for the user, such as ISO-8859-1 or UTF-8. Defaults to UTF-8.
+- `language_locale_key` (String) The user’s language. Defaults to en_US.
+- `locale_sid_key` (String) The value of the field affects formatting and parsing of values, especially numeric values, in the user interface. It doesn’t affect the API. The field values are named according to the language, and the country if necessary, using two-letter ISO codes. The set of names is based on the ISO standard. You can also manually set a user’s locale in the user interface, and then use that value for inserting or updating other users via the API. Defaults to en_US.
+- `reset_password` (Boolean) Reset password and send an email to the user. No reset is performed if this field is omitted, is false, or was true and remained true on subsequent apply. Please set to false and then true in subsequent applies, or have it set to true on create to trigger the reset.
+- `time_zone_sid_key` (String) A User time zone affects the offset used when displaying or entering times in the user interface. But the API doesn’t use a User time zone when querying or setting values. Values for this field are named using region and key city, according to ISO standards. You can also manually set one User time zone in the user interface, and then use that value for creating or updating other User records via the API. Defaults to America/New_York.
+- `user_role_id` (String) ID of the user’s UserRole.
 
 ### Read-Only
 
-- **id** (String) ID of the resource.
+- `id` (String) ID of the resource.
 
 ## Import
 

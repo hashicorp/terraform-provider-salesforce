@@ -28,10 +28,10 @@ output "user_license_id" {
 
 ### Required
 
-- **license_definition_key** (String) A string that uniquely identifies a particular user license. Valid options vary depending on organization type and configuration. For a complete list see https://developer.salesforce.com/docs/atlas.en-us.api.meta/api/sforce_api_objects_userlicense.htm
+- `license_definition_key` (String) A string that uniquely identifies a particular user license. Valid options vary depending on organization type and configuration. For a complete list see https://developer.salesforce.com/docs/atlas.en-us.api.meta/api/sforce_api_objects_userlicense.htm
 
 ### Read-Only
 
-- **id** (String) ID of the resource.
+- `id` (String) ID of the resource.
 
 

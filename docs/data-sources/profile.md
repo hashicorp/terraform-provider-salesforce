@@ -27,10 +27,10 @@ output "profile_id" {
 
 ### Required
 
-- **name** (String) The name of the profile.
+- `name` (String) The name of the profile.
 
 ### Read-Only
 
-- **id** (String) ID of the resource.
+- `id` (String) ID of the resource.
 
 
