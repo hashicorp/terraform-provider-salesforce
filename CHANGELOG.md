@@ -2,7 +2,7 @@
 
 IMPROVEMENTS:
 
-* Update `terraform-plugin-framework` to v0.9. ([#83](https://github.com/hashicorp/terraform-provider-salesforce/pull/83))
+* Update `terraform-plugin-framework` to v0.9 ([#83](https://github.com/hashicorp/terraform-provider-salesforce/pull/83))
 
 ## 0.1.0 (February 23, 2022)
 
