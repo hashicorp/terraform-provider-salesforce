@@ -3,7 +3,7 @@ package auth
 import (
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"net/http"
 	"net/url"
 	"os"
@@ -32,7 +32,7 @@ type AuthResponse struct {
 func SignJWT(privateKey []byte, user string, clientId string, audience string) (string, error) {
 	priv, err := jwt.ParseRSAPrivateKeyFromPEM(privateKey)
 	if err != nil {
-		return "", err
+		return "", fmt.Errorf("not able to parse PEM: %v", err)
 	}
 
 	token := jwt.NewWithClaims(jwt.SigningMethodRS256, jwt.StandardClaims{
@@ -71,7 +71,7 @@ func Authenticate(domain string, signedJwt string) (AuthResponse, error) {
 	}
 	defer resp.Body.Close()
 
-	respBytes, err := ioutil.ReadAll(resp.Body)
+	respBytes, err := io.ReadAll(resp.Body)
 	if err != nil {
 		return oauth, fmt.Errorf("Error reading authentication response bytes: %v", err)
 	}
@@ -108,7 +108,7 @@ func Client(config Config) (*force.ForceApi, error) {
 		path = config.PrivateKey
 	}
 	if _, err := os.Stat(path); err == nil {
-		privateKeyBytes, err = ioutil.ReadFile(path)
+		privateKeyBytes, err = os.ReadFile(path)
 		if err != nil {
 			return nil, err
 		}
