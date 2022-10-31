@@ -18,7 +18,7 @@ This provider plugin is maintained by the Terraform team at [HashiCorp](https://
 ## Requirements
 
 -	[Terraform](https://www.terraform.io/downloads.html) >= 1.0.3
--	[Go](https://golang.org/doc/install) >= 1.16
+-	[Go](https://golang.org/doc/install) >= 1.19
 
 ## Setup
 
