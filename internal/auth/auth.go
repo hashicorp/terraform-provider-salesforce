@@ -32,7 +32,7 @@ type AuthResponse struct {
 func SignJWT(privateKey []byte, user string, clientId string, audience string) (string, error) {
 	priv, err := jwt.ParseRSAPrivateKeyFromPEM(privateKey)
 	if err != nil {
-		return "", fmt.Errorf("was not process neither file and PEM file. error: %v", err)
+		return "", fmt.Errorf("was not able to process neither file and PEM file. error: %v", err)
 	}
 
 	token := jwt.NewWithClaims(jwt.SigningMethodRS256, jwt.StandardClaims{
