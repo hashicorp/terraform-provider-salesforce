@@ -10,6 +10,8 @@ require (
 	github.com/hashicorp/terraform-plugin-sdk/v2 v2.17.0
 	github.com/mitchellh/go-homedir v1.1.0
 	github.com/nimajalali/go-force v0.0.0-20200831220737-454890ee2b7c
+	github.com/hashicorp/hcl/v2 v2.12.0
+
 )
 
 require (
