@@ -1,3 +1,6 @@
+// Copyright (c) HashiCorp, Inc.
+// SPDX-License-Identifier: MPL-2.0
+
 package picklists
 
 // TODO use describe API to grab official up to date lists and embed
