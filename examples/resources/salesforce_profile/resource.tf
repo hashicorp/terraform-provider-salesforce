@@ -1,3 +1,6 @@
+# Copyright (c) HashiCorp, Inc.
+# SPDX-License-Identifier: MPL-2.0
+
 data "salesforce_user_license" "fdc" {
   license_definition_key = "PID_FDC_FREE"
 }
