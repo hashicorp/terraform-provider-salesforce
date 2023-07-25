@@ -1,6 +1,6 @@
 
 <!-- archived-provider -->
->Please note: This Terraform provider will be archived in 30 days, August 10, 2023, per our [provider archiving process](https://terraform.io/docs/internals/archiving.html). What does this mean?
+>Please note: This Terraform provider will be archived in 15 days, August 10, 2023, per our [provider archiving process](https://terraform.io/docs/internals/archiving.html). What does this mean?
 >1. The code repository and all commit history will still be available.
 >1. Existing released binaries will remain available on the releases site.
 >1. Issues and pull requests are not being monitored.
